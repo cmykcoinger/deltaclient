@@ -1,5 +1,6 @@
 package client;
 
+import net.minecraft.client.gui.DrawContext;
 import org.joml.Matrix4f;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,8 +8,9 @@ import java.util.List;
 public abstract class Module {
     public final String name;
     public final Category category;
-    public final boolean action;          // true = кнопка (выполняется по бинду), false = переключатель
+    public final boolean action;
     public boolean enabled, expanded, wasDown;
+    public float animOn, animExp;
     public int key = -1;
     public final List<Setting> settings = new ArrayList<>();
 
@@ -21,6 +23,7 @@ public abstract class Module {
         if (action) { run(); return; }
         enabled = !enabled;
         if (enabled) onEnable(); else onDisable();
+        Notifications.push(name + (enabled ? " enabled" : " disabled"), enabled);
     }
 
     public void run() {}
@@ -28,4 +31,5 @@ public abstract class Module {
     public void onDisable() {}
     public void onTick() {}
     public void onRender3D(Matrix4f m, float delta) {}
+    public void onRender2D(DrawContext g, float delta) {}
 }
