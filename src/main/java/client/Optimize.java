@@ -4,9 +4,8 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.CloudRenderMode;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.option.GraphicsMode;
-import net.minecraft.client.option.ParticlesMode;
+import net.minecraft.client.option.SimpleOption;
 
-/** Настройки для слабых ПК: включил - всё урезается, выключил - возвращается как было. */
 public class Optimize extends Module {
     private final Setting dist      = add(Setting.num("View distance", 6, 2, 16));
     private final Setting entity    = add(Setting.num("Entity distance", 0.5, 0.5, 1.5));
@@ -18,7 +17,7 @@ public class Optimize extends Module {
 
     private int oDist, oBlend;
     private double oEntity;
-    private ParticlesMode oPart;
+    private Object oPart;
     private GraphicsMode oGfx;
     private CloudRenderMode oCloud;
     private boolean oShadow, oAo;
@@ -41,8 +40,19 @@ public class Optimize extends Module {
 
     @Override
     public void onTick() {
-        // применяем настройки, если слайдеры поменяли, пока модуль включён
         if (MinecraftClient.getInstance().options.getViewDistance().getValue() != (int) dist.value) apply();
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void particlesMinimal(GameOptions o) {
+        SimpleOption opt = (SimpleOption) o.getParticles();
+        Object[] all = ((Enum) opt.getValue()).getDeclaringClass().getEnumConstants();
+        opt.setValue(all[all.length - 1]);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void particlesSet(GameOptions o, Object v) {
+        ((SimpleOption) o.getParticles()).setValue(v);
     }
 
     private void apply() {
@@ -50,7 +60,7 @@ public class Optimize extends Module {
         o.getViewDistance().setValue((int) dist.value);
         o.getEntityDistanceScaling().setValue(entity.value);
         o.getBiomeBlendRadius().setValue(0);
-        if (particles.on()) o.getParticles().setValue(ParticlesMode.MINIMAL);
+        if (particles.on()) particlesMinimal(o);
         if (fast.on()) o.getGraphicsMode().setValue(GraphicsMode.FAST);
         if (clouds.on()) o.getCloudRenderMode().setValue(CloudRenderMode.OFF);
         if (shadows.on()) o.getEntityShadows().setValue(false);
@@ -63,7 +73,7 @@ public class Optimize extends Module {
         o.getViewDistance().setValue(oDist);
         o.getEntityDistanceScaling().setValue(oEntity);
         o.getBiomeBlendRadius().setValue(oBlend);
-        o.getParticles().setValue(oPart);
+        particlesSet(o, oPart);
         o.getGraphicsMode().setValue(oGfx);
         o.getCloudRenderMode().setValue(oCloud);
         o.getEntityShadows().setValue(oShadow);
