@@ -3,7 +3,6 @@ package client;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.Vec3d;
 
-/** Главный переключатель HUD + выбор элементов интерфейса и прозрачности. */
 public class Interface extends Module {
     public static Interface I;
     public static double bps;

@@ -8,7 +8,6 @@ import org.joml.Matrix4f;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Прокачанный TargetESP: двойная энерго-спираль, пульсирующее кольцо у ног, 3 призрака со шлейфами и 3D-маркер. */
 public class TargetESP extends Module {
     private final Setting mode   = add(Setting.mode("Style", 0, "Ghosts + Helix", "Dual Helix", "Ghosts Only"));
     private final Setting hold   = add(Setting.num("Hold (sec)", 3.5, 0.5, 10.0));
@@ -42,7 +41,6 @@ public class TargetESP extends Module {
 
         RenderUtil.begin3D();
 
-        // 1. Пульсирующее двойное кольцо под ногами цели
         double pulse = 1.0 + Math.sin(time * 4.0) * 0.07;
         for (int ringIdx = 0; ringIdx < 2; ringIdx++) {
             double rr = baseR * (ringIdx == 0 ? pulse : pulse * 0.72);
@@ -59,7 +57,6 @@ public class TargetESP extends Module {
             });
         }
 
-        // 2. Двойная восходящая спираль (Helix)
         if (style == 0 || style == 1) {
             for (int strand = 0; strand < 2; strand++) {
                 List<Vec3d> helix = new ArrayList<>();
@@ -80,7 +77,6 @@ public class TargetESP extends Module {
             }
         }
 
-        // 3. 3 орбитальных призрака с длинными шлейфами и 3D-ромбом в голове
         if (style == 0 || style == 2) {
             for (int g = 0; g < 3; g++) {
                 List<Vec3d> pts = new ArrayList<>();
@@ -98,7 +94,6 @@ public class TargetESP extends Module {
                     return RenderUtil.alpha(col, aa * (tNorm * tNorm));
                 });
 
-                // Светящийся октаэдр (ромб) на голове призрака
                 Vec3d p0 = pts.get(0);
                 double s = 0.075;
                 int headCol = RenderUtil.alpha(hurt ? 0xFF8899 : 0xFFFFFF, aa);

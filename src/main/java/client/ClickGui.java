@@ -47,19 +47,16 @@ public class ClickGui extends Screen {
         int acc2 = T[1] & 0xFFFFFF;
         hits.clear();
 
-        // Мягкое затемнение фона и полупрозрачное "стеклянное" окно
         g.fill(0, 0, width, height, RenderUtil.alpha(0x05050A, 0.34f * a));
         Draw.rr(g, winX - 2, winY - 2, winW + 4, winH + 4, 18, c(0x000000, 0.35f));
         Draw.rr(g, winX - 1, winY - 1, winW + 2, winH + 2, 17, c(acc, 0.28f));
         Draw.rr(g, winX, winY, winW, winH, 16, c(0x111019, 0.78f));
         add(HEADER, winX, winY, winW, pad + 24, 0, null, null);
 
-        // ---------- боковая панель ----------
         int sbW = MathHelper.clamp((int) (winW * 0.22f), 90, 136);
         int sx = winX + pad, sy = winY + pad, sh = winH - 2 * pad;
         Draw.rr(g, sx, sy, sbW, sh, 12, c(0x181724, 0.74f));
 
-        // Логотип с градиентным акцентом
         Draw.rr(g, sx + 8, sy + 8, 22, 22, 11, c(acc, 0.22f));
         scaled(g, "M", sx + 13.4f, sy + 11.5f, 1.8f, c(acc2, 1f));
         scaled(g, RenderUtil.NAME, sx + 36, sy + 13, 1.3f, c(0xFFFFFF, 1f));
@@ -111,7 +108,6 @@ public class ClickGui extends Screen {
             Draw.text(g, RenderUtil.NAME + " 1.21.4", sx + 32, uy + 16, c(0x7A7992, 1f));
         }
 
-        // ---------- верхняя панель и поиск ----------
         int mx0 = sx + sbW + pad, mw = winX + winW - pad - mx0;
         Draw.rr(g, mx0 + 2, winY + pad + 4, 10, 10, 5, c(acc, 1f));
         scaled(g, selected < 0 ? "All Modules" : disp(cats[selected]), mx0 + 17, winY + pad + 3, 1.15f, c(0xFFFFFF, 1f));
@@ -126,7 +122,6 @@ public class ClickGui extends Screen {
         Draw.text(g, ms, px + pw + 6, winY + pad + 5, c(0x6E6D86, 1f));
         add(SEARCH, px, winY + pad + 1, pw, 16, 0, null, null);
 
-        // ---------- сетка карточек модулей ----------
         int cx = mx0, cy = winY + pad + 24, cw = mw, ch = winH - pad - 24 - pad;
         contentY = cy; contentH = ch;
         List<Module> list = new ArrayList<>();

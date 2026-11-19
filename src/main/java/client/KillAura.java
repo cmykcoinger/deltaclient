@@ -5,8 +5,8 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.AxeItem;
 import net.minecraft.item.ShieldItem;
-import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
@@ -175,8 +175,7 @@ public class KillAura extends Module {
         int axeSlot = -1;
         for (int i = 0; i < 9; i++) {
             var st = p.getInventory().getStack(i);
-            if (!st.isEmpty() && st.getName().getString().toLowerCase().contains("топор")
-                    || st.getTranslationKey().contains("axe")) {
+            if (!st.isEmpty() && (st.getItem() instanceof AxeItem || st.getName().getString().toLowerCase().contains("топор"))) {
                 axeSlot = i;
                 break;
             }
@@ -212,7 +211,6 @@ public class KillAura extends Module {
         float k = 1f - (float) Math.exp(-(32.0 / smooth.value) * dt);
         float maxStep = (float) (maxSpeed.value * 22.0 * dt);
 
-        // Привязка к сетке чувствительности мыши (GCD-шаг) для плавности без микрорывков
         double sens = mc.options.getMouseSensitivity().getValue() * 0.6 + 0.2;
         double gcd = sens * sens * sens * 1.2;
 

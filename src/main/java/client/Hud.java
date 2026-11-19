@@ -214,7 +214,6 @@ public class Hud {
         Draw.text(g, t.getName().getString(), x + 36, y + 7, 0xFFFFFFFF);
         Draw.text(g, String.format("%.1f HP  %dm", hp, Math.round(mc.player.distanceTo(t))), x + 36, y + 18, 0xFFA4A4BE);
 
-        // Полоска здоровья + кольцевой индикатор
         int barX = x + 36, barY = y + 30, barW = w - 68;
         Draw.rr(g, barX, barY, barW, 4, 2, 0x662A2A3C);
         Draw.rr(g, barX, barY, Math.max(4, (int) (barW * ratio)), 4, 2, 0xFF000000 | RenderUtil.mix(acc, acc2, ratio));
