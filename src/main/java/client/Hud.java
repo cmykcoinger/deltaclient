@@ -120,7 +120,7 @@ public class Hud {
         Draw.chip(g, e.x, e.y, title, acc, 0xFFFFFFFF);
         int y = e.y + 17;
         if (has) {
-            Draw.rr(g, e.x, y, maxw, left.size() * 11 + 6, 5, 0xC0141420);
+            Draw.rr(g, e.x, y, maxw, left.size() * 11 + 6, 9, 0xC8141420);
             for (int i = 0; i < left.size(); i++) {
                 Draw.text(g, left.get(i), e.x + 7, y + 4 + i * 11, 0xFFE6E6F2);
                 Draw.text(g, right.get(i), e.x + maxw - 7 - Draw.tw(right.get(i)), y + 4 + i * 11, 0xFF000000 | acc);
@@ -182,12 +182,12 @@ public class Hud {
 
         int x = TARGET.x, y = TARGET.y, w = TARGET.w, h = TARGET.h;
         TARGET.on = true;
-        Draw.rr(g, x - 1, y - 1, w + 2, h + 2, 8, 0x44000000);
-        Draw.rr(g, x, y, w, h, 7, 0xE0141420);
+        Draw.rr(g, x - 1, y - 1, w + 2, h + 2, 12, 0x33000000);
+        Draw.rr(g, x, y, w, h, 11, 0xE6141420);
         if (t instanceof AbstractClientPlayerEntity pl) {
             PlayerSkinDrawer.draw(g, pl.getSkinTextures(), x + 6, y + 6, 24);
         } else {
-            Draw.rr(g, x + 6, y + 6, 24, 24, 5, 0xFF1E1E2A);
+            Draw.rr(g, x + 6, y + 6, 24, 24, 12, 0xFF1E1E2A);
             Draw.text(g, t.getName().getString().substring(0, 1), x + 16, y + 14, 0xFFFFFFFF);
         }
         Draw.text(g, t.getName().getString(), x + 36, y + 8, 0xFFFFFFFF);
@@ -214,8 +214,8 @@ public class Hud {
             for (int i = 0; i < inv.size(); i++) { ItemStack s = inv.getStack(i); if (s.isOf(it)) n += s.getCount(); }
             String t = n > 0 ? String.valueOf(n) : "N/A";
             int w = 30 + Draw.tw(t);
-            Draw.rr(g, x - 1, ITEMS.y - 1, w + 2, 18, 6, 0x44000000);
-            Draw.rr(g, x, ITEMS.y, w, 16, 6, 0xE0141420);
+            Draw.rr(g, x - 1, ITEMS.y - 1, w + 2, 18, 9, 0x33000000);
+            Draw.rr(g, x, ITEMS.y, w, 16, 8, 0xE6141420);
             g.getMatrices().push();
             g.getMatrices().translate(x + 3f, ITEMS.y + 2f, 0f);
             g.getMatrices().scale(0.75f, 0.75f, 1f);
@@ -231,12 +231,12 @@ public class Hud {
 
     private static void armor(DrawContext g, MinecraftClient mc) {
         EquipmentSlot[] slots = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
-        Draw.rr(g, ARMOR.x - 1, ARMOR.y - 1, ARMOR.w + 2, ARMOR.h + 2, 7, 0x44000000);
-        Draw.rr(g, ARMOR.x, ARMOR.y, ARMOR.w, ARMOR.h, 6, 0xE0141420);
+        Draw.rr(g, ARMOR.x - 1, ARMOR.y - 1, ARMOR.w + 2, ARMOR.h + 2, 11, 0x33000000);
+        Draw.rr(g, ARMOR.x, ARMOR.y, ARMOR.w, ARMOR.h, 10, 0xE6141420);
         for (int i = 0; i < 4; i++) {
             ItemStack s = mc.player.getEquippedStack(slots[i]);
             int ix = ARMOR.x + 4 + i * 20, iy = ARMOR.y + 3;
-            if (s.isEmpty()) { Draw.rr(g, ix + 2, iy + 2, 12, 12, 3, 0xFF22222E); continue; }
+            if (s.isEmpty()) { Draw.rr(g, ix + 2, iy + 2, 12, 12, 6, 0xFF22222E); continue; }
             g.drawItem(s, ix, iy);
             if (s.getMaxDamage() > 0) {
                 float f = 1f - s.getDamage() / (float) s.getMaxDamage();
@@ -261,7 +261,7 @@ public class Hud {
     }
     private static void key(DrawContext g, int x, int y, int s, String t, boolean on, int acc) { keyW(g, x, y, s, t, on, acc); }
     private static void keyW(DrawContext g, int x, int y, int w, String t, boolean on, int acc) {
-        Draw.rr(g, x, y, w, 16, 4, on ? (0xCC000000 | (acc & 0xFFFFFF)) : 0xC0141420);
+        Draw.rr(g, x, y, w, 16, 8, on ? (0xCC000000 | (acc & 0xFFFFFF)) : 0xC8141420);
         Draw.text(g, t, x + (w - Draw.tw(t)) / 2, y + 4, on ? 0xFF000000 : 0xFFB0B0C4);
     }
 

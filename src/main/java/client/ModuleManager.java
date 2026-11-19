@@ -10,6 +10,7 @@ public class ModuleManager {
     public static void init() {
         modules.add(new AimAssist());
         modules.add(new TriggerBot());
+        modules.add(new AutoSwap());
         modules.add(new AutoTotem());
         modules.add(new ClickPearl());
 

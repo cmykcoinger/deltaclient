@@ -11,6 +11,7 @@ import org.lwjgl.glfw.GLFW;
 
 public class ClientMain implements ClientModInitializer {
     private boolean rsDown;
+    private long lastFrame;
 
     @Override
     public void onInitializeClient() {
@@ -35,6 +36,16 @@ public class ClientMain implements ClientModInitializer {
             TargetInfo.update(mc);
         });
 
+        // Каждый кадр (плавная наводка)
+        WorldRenderEvents.START.register(ctx -> {
+            long now = System.nanoTime();
+            float dt = lastFrame == 0 ? 0.016f : Math.min(0.1f, (now - lastFrame) / 1_000_000_000f);
+            lastFrame = now;
+            var mc = net.minecraft.client.MinecraftClient.getInstance();
+            if (mc.player == null || mc.world == null) return;
+            for (Module m : ModuleManager.modules) if (m.enabled) m.onFrame(dt);
+        });
+
         WorldRenderEvents.LAST.register(ctx -> {
             if (ctx.matrixStack() == null) return;
             var m = ctx.matrixStack().peek().getPositionMatrix();
@@ -45,7 +56,6 @@ public class ClientMain implements ClientModInitializer {
 
         HudRenderCallback.EVENT.register(Hud::render);
 
-        // Чат открыт -> HUD-элементы можно двигать
         ScreenEvents.AFTER_INIT.register((client, screen, sw, sh) -> {
             if (screen instanceof ChatScreen)
                 ScreenEvents.afterRender(screen).register((s, g, mx, my, d) -> Hud.editor(g, mx, my));

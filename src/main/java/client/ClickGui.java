@@ -47,17 +47,17 @@ public class ClickGui extends Screen {
         hits.clear();
 
         g.fill(0, 0, width, height, RenderUtil.alpha(0x000000, .38f * a));
-        Draw.rr(g, winX - 2, winY - 2, winW + 4, winH + 4, 11, c(0x000000, .3f));
-        Draw.rr(g, winX, winY, winW, winH, 10, c(0x15141C, .95f));
+        Draw.rr(g, winX - 2, winY - 2, winW + 4, winH + 4, 18, c(0x000000, .3f));
+        Draw.rr(g, winX, winY, winW, winH, 16, c(0x15141C, .95f));
         add(HEADER, winX, winY, winW, pad + 24, 0, null, null);
 
         // ---------- боковая панель ----------
         int sbW = MathHelper.clamp((int) (winW * 0.22f), 86, 132);
         int sx = winX + pad, sy = winY + pad, sh = winH - 2 * pad;
-        Draw.rr(g, sx, sy, sbW, sh, 8, c(0x1C1B26, 1f));
+        Draw.rr(g, sx, sy, sbW, sh, 12, c(0x1C1B26, 1f));
 
         // логотип: красная M
-        Draw.rr(g, sx + 8, sy + 8, 22, 22, 6, c(0x3A1219, 1f));
+        Draw.rr(g, sx + 8, sy + 8, 22, 22, 11, c(0x3A1219, 1f));
         scaled(g, "M", sx + 13.2f, sy + 11.5f, 1.8f, c(0xFF3B4D, 1f));
         scaled(g, "M", sx + 13.9f, sy + 11.5f, 1.8f, c(0xFF3B4D, 1f));
         scaled(g, RenderUtil.NAME, sx + 36, sy + 13, 1.3f, c(0xFFFFFF, 1f));
@@ -73,12 +73,12 @@ public class ClickGui extends Screen {
             boolean hov = in(mx, my, sx + 6, iy, sbW - 12, 20);
             catAnim[i + 1] += ((sel ? 1f : hov ? .4f : 0f) - catAnim[i + 1]) * .25f;
             float k = catAnim[i + 1];
-            Draw.rr(g, sx + 6, iy, sbW - 12, 18, 6, c(0x2B2A3A, k));
-            Draw.rr(g, sx + 12, iy + 5, 8, 8, 2, c(RenderUtil.mix(0x55546B, acc, k), 1f));
+            Draw.rr(g, sx + 6, iy, sbW - 12, 18, 9, c(0x2B2A3A, k));
+            Draw.rr(g, sx + 12, iy + 5, 8, 8, 4, c(RenderUtil.mix(0x55546B, acc, k), 1f));
             Draw.text(g, nm, sx + 25, iy + 5, c(RenderUtil.mix(0x9A99B0, 0xFFFFFF, k), 1f));
             String cs = String.valueOf(count);
             int pw = Draw.tw(cs) + 8;
-            Draw.rr(g, sx + sbW - 10 - pw, iy + 3, pw, 12, 5, c(sel ? 0x3A3950 : 0x25242F, 1f));
+            Draw.rr(g, sx + sbW - 10 - pw, iy + 3, pw, 12, 6, c(sel ? 0x3A3950 : 0x25242F, 1f));
             Draw.text(g, cs, sx + sbW - 6 - pw, iy + 5, c(sel ? 0xFFFFFF : 0x6A6980, 1f));
             add(CAT, sx + 6, iy, sbW - 12, 18, i, null, null);
         }
@@ -87,14 +87,14 @@ public class ClickGui extends Screen {
             Draw.text(g, "Settings", sx + 10, setY, c(0x5E5D72, 1f));
             int ty = setY + 12;
             boolean hov = in(mx, my, sx + 6, ty, sbW - 12, 18);
-            Draw.rr(g, sx + 6, ty, sbW - 12, 18, 6, c(0x2B2A3A, hov ? 1f : 0f));
+            Draw.rr(g, sx + 6, ty, sbW - 12, 18, 9, c(0x2B2A3A, hov ? 1f : 0f));
             Draw.rr(g, sx + 12, ty + 5, 8, 8, 4, c(acc, 1f));
             Draw.text(g, "Theme", sx + 25, ty + 5, c(0x9A99B0, 1f));
             add(THEME, sx + 6, ty, sbW - 12, 18, 0, null, null);
         }
         if (sh >= 250) {
             int uy = sy + sh - 34;
-            Draw.rr(g, sx + 6, uy, sbW - 12, 28, 7, c(0x25242F, 1f));
+            Draw.rr(g, sx + 6, uy, sbW - 12, 28, 13, c(0x25242F, 1f));
             Draw.rr(g, sx + 12, uy + 7, 14, 14, 7, c(0x3A3950, 1f));
             String user = MinecraftClient.getInstance().getSession().getUsername();
             Draw.text(g, user.substring(0, 1).toUpperCase(), sx + 16, uy + 10, c(0xFFFFFF, 1f));
@@ -104,13 +104,13 @@ public class ClickGui extends Screen {
 
         // ---------- заголовок и поиск ----------
         int mx0 = sx + sbW + pad, mw = winX + winW - pad - mx0;
-        Draw.rr(g, mx0 + 2, winY + pad + 4, 10, 10, 3, c(acc, 1f));
+        Draw.rr(g, mx0 + 2, winY + pad + 4, 10, 10, 5, c(acc, 1f));
         scaled(g, selected < 0 ? "All" : disp(cats[selected]), mx0 + 17, winY + pad + 3, 1.2f, c(0xFFFFFF, 1f));
         String ms = ping() + " ms";
         int msW = Draw.tw(ms) + 8;
         int pw = Math.max(60, Math.min(150, mw - msW - 70));
         int px = mx0 + mw - msW - pw;
-        Draw.rr(g, px, winY + pad + 1, pw, 16, 7, c(searching ? 0x2E2D3E : 0x22212D, 1f));
+        Draw.rr(g, px, winY + pad + 1, pw, 16, 8, c(searching ? 0x2E2D3E : 0x22212D, 1f));
         String st = search.isEmpty() && !searching ? "Search" : search + (searching && (System.currentTimeMillis() / 500) % 2 == 0 ? "_" : "");
         Draw.text(g, st, px + 7, winY + pad + 5, c(search.isEmpty() ? 0x4E4D62 : 0xFFFFFF, 1f));
         Draw.text(g, ms, px + pw + 6, winY + pad + 5, c(0x5E5D72, 1f));
@@ -157,14 +157,14 @@ public class ClickGui extends Screen {
     }
 
     private void drawCard(DrawContext g, Module m, int x, int y, int w, int h, int acc) {
-        Draw.rr(g, x, y, w, h, 7, c(0x1D1C27, 1f));
+        Draw.rr(g, x, y, w, h, 12, c(0x1D1C27, 1f));
         float k = m.animOn;
-        Draw.rr(g, x + 8, y + 9, 8, 8, 2, c(RenderUtil.mix(0x46455C, acc, k), 1f));
+        Draw.rr(g, x + 8, y + 9, 8, 8, 4, c(RenderUtil.mix(0x46455C, acc, k), 1f));
         Draw.text(g, m.name, x + 21, y + 9, c(RenderUtil.mix(0x8F8EA6, 0xFFFFFF, k), 1f));
 
         int right = x + w - 8;
         if (m.action) {
-            Draw.rr(g, right - 26, y + 7, 26, 12, 5, c(acc, .35f));
+            Draw.rr(g, right - 26, y + 7, 26, 12, 6, c(acc, .35f));
             Draw.text(g, "USE", right - 20, y + 9, c(0xFFFFFF, 1f));
             right -= 32;
         } else {
@@ -176,7 +176,7 @@ public class ClickGui extends Screen {
 
         String bl = binding == m ? "..." : (m.key > 0 ? keyName(m.key) : "None");
         int bw = Draw.tw(bl) + 10;
-        Draw.rr(g, right - bw, y + 7, bw, 12, 5, c(0x272634, 1f));
+        Draw.rr(g, right - bw, y + 7, bw, 12, 6, c(0x272634, 1f));
         Draw.text(g, bl, right - bw + 5, y + 9, c(binding == m ? 0xFFFFFF : 0x67667E, 1f));
         add(BIND, right - bw, y + 7, bw, 12, 0, m, null);
 
@@ -184,12 +184,11 @@ public class ClickGui extends Screen {
         for (Setting s : m.settings) {
             if (s.bool) {
                 Draw.text(g, s.name, x + 8, ry + 4, c(0xE0E0EC, 1f));
-                if (s.on()) check(g, x + w - 16, ry + 4, c(0x4CE08A, 1f));
-                else cross(g, x + w - 16, ry + 4, c(0xFF4D5E, 1f));
+                box(g, x + w - 20, ry + 2, s.on(), acc);
                 add(BOOL, x, ry, w, 16, 0, m, s);
                 ry += 16;
             } else {
-                String v = String.format("%.1f", s.value);
+                String v = s.options != null ? s.options[Math.max(0, Math.min(s.options.length - 1, (int) Math.round(s.value)))] : String.format("%.1f", s.value);
                 Draw.text(g, s.name, x + 8, ry + 3, c(0xE0E0EC, 1f));
                 Draw.text(g, v, x + w - 8 - Draw.tw(v), ry + 3, c(0xE0E0EC, 1f));
                 int tx = x + 8, tw = w - 16, ty = ry + 16;
@@ -295,6 +294,16 @@ public class ClickGui extends Screen {
         Draw.line(g, x, y, x + 6, y + 6, col); Draw.line(g, x + 6, y, x, y + 6, col);
         Draw.line(g, x + 1, y, x + 7, y + 6, col); Draw.line(g, x + 7, y, x + 1, y + 6, col);
     }
+    /** Круглая отметка вместо старых палочек. */
+    private void box(DrawContext g, int x, int y, boolean on, int acc) {
+        Draw.rr(g, x, y, 12, 12, 6, c(on ? acc : 0x2D2C3B, 1f));
+        if (on) {
+            Draw.line(g, x + 3, y + 6, x + 5, y + 8, c(0xFFFFFF, 1f));
+            Draw.line(g, x + 5, y + 8, x + 9, y + 3, c(0xFFFFFF, 1f));
+        } else {
+            Draw.rr(g, x + 4, y + 4, 4, 4, 2, c(0x55546B, 1f));
+        }
+    }
     private static int ping() {
         var mc = MinecraftClient.getInstance();
         var nh = mc.getNetworkHandler();
@@ -314,7 +323,8 @@ public class ClickGui extends Screen {
     }
     private void setSlider(Hit h, float mx) {
         double k = MathHelper.clamp((mx - h.x) / (double) h.w, 0, 1);
-        h.s.value = Math.round((h.s.min + (h.s.max - h.s.min) * k) * 100) / 100.0;
+        double raw = h.s.min + (h.s.max - h.s.min) * k;
+        h.s.value = h.s.options != null ? Math.round(raw) : Math.round(raw * 100) / 100.0;
     }
     private void add(int type, int x, int y, int w, int h, int idx, Module m, Setting s) {
         Hit t = new Hit(); t.type = type; t.x = x; t.y = y; t.w = w; t.h = h; t.idx = idx; t.m = m; t.s = s; hits.add(t);

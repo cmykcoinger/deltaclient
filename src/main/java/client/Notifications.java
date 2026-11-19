@@ -34,8 +34,8 @@ public class Notifications {
             int w = Draw.tw(n.text) + 34;
             int x = sw / 2 - w / 2;
             int yy = y + (int) ((1f - p) * 10);
-            Draw.rr(g, x - 1, yy - 1, w + 2, 20, 8, 0x44000000);
-            Draw.rr(g, x, yy, w, 18, 8, 0xE0141420);
+            Draw.rr(g, x - 1, yy - 1, w + 2, 20, 10, 0x33000000);
+            Draw.rr(g, x, yy, w, 18, 9, 0xE6141420);
             Draw.rr(g, x + 6, yy + 5, 16, 8, 4, n.on ? (0xFF000000 | acc) : 0xFF3A3947);
             Draw.rr(g, x + (n.on ? 14 : 7), yy + 6, 6, 6, 3, 0xFFFFFFFF);
             Draw.text(g, n.text, x + 28, yy + 5, 0xFFFFFFFF);

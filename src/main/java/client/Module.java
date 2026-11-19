@@ -30,6 +30,8 @@ public abstract class Module {
     public void onEnable() {}
     public void onDisable() {}
     public void onTick() {}
+    /** Вызывается каждый кадр (dt - секунды). */
+    public void onFrame(float dt) {}
     public void onRender3D(Matrix4f m, float delta) {}
     public void onRender2D(DrawContext g, float delta) {}
 }
