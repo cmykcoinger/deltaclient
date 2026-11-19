@@ -28,40 +28,40 @@ public class ClickGui extends Screen {
     private float anim;
     private int contentY, contentH;
 
-    public ClickGui() { super(Text.literal("Mikger")); }
+    public ClickGui() { super(Text.literal("Rockstar")); }
 
     @Override public boolean shouldPause() { return false; }
 
     @Override
     public void render(DrawContext g, int mx, int my, float delta) {
-        anim += (1f - anim) * 0.22f;
+        anim += (1f - anim) * 0.24f;
         float a = anim;
         int pad = 8;
-        int winW = Math.min((int) (width * 0.92f), 650);
-        int winH = Math.min((int) (height * 0.90f), 390);
+        int winW = Math.min((int) (width * 0.92f), 660);
+        int winH = Math.min((int) (height * 0.90f), 395);
         int winX = (width - winW) / 2 + ox;
-        int winY = (height - winH) / 2 + oy + (int) ((1f - a) * 14);
+        int winY = (height - winH) / 2 + oy + (int) ((1f - a) * 12);
 
         int[] T = RenderUtil.THEMES[RenderUtil.theme];
         int acc = T[0] & 0xFFFFFF;
         int acc2 = T[1] & 0xFFFFFF;
         hits.clear();
 
-        g.fill(0, 0, width, height, RenderUtil.alpha(0x05050A, 0.34f * a));
-        Draw.rr(g, winX - 2, winY - 2, winW + 4, winH + 4, 18, c(0x000000, 0.35f));
-        Draw.rr(g, winX - 1, winY - 1, winW + 2, winH + 2, 17, c(acc, 0.28f));
-        Draw.rr(g, winX, winY, winW, winH, 16, c(0x111019, 0.78f));
+        g.fill(0, 0, width, height, RenderUtil.alpha(0x04060E, 0.36f * a));
+        Draw.rr(g, winX - 2, winY - 2, winW + 4, winH + 4, 18, c(0x000000, 0.38f));
+        Draw.rr(g, winX - 1, winY - 1, winW + 2, winH + 2, 17, c(acc, 0.32f));
+        Draw.rr(g, winX, winY, winW, winH, 16, c(0x0D111C, 0.84f));
         add(HEADER, winX, winY, winW, pad + 24, 0, null, null);
 
-        int sbW = MathHelper.clamp((int) (winW * 0.22f), 90, 136);
+        int sbW = MathHelper.clamp((int) (winW * 0.22f), 92, 138);
         int sx = winX + pad, sy = winY + pad, sh = winH - 2 * pad;
-        Draw.rr(g, sx, sy, sbW, sh, 12, c(0x181724, 0.74f));
+        Draw.rr(g, sx, sy, sbW, sh, 12, c(0x121826, 0.80f));
 
-        Draw.rr(g, sx + 8, sy + 8, 22, 22, 11, c(acc, 0.22f));
-        scaled(g, "M", sx + 13.4f, sy + 11.5f, 1.8f, c(acc2, 1f));
-        scaled(g, RenderUtil.NAME, sx + 36, sy + 13, 1.3f, c(0xFFFFFF, 1f));
+        Draw.rr(g, sx + 8, sy + 8, 22, 22, 11, c(acc, 0.25f));
+        scaled(g, "R", sx + 13.5f, sy + 11.5f, 1.8f, c(acc2, 1f));
+        scaled(g, "Rockstar", sx + 36, sy + 13, 1.25f, c(0xFFFFFF, 1f));
 
-        Draw.text(g, "Categories", sx + 10, sy + 42, c(0x6E6D86, 1f));
+        Draw.text(g, "Sections", sx + 10, sy + 42, c(0x78849E, 1f));
         Category[] cats = Category.values();
         int step = sh < 250 ? 19 : 24;
         for (int i = -1; i < cats.length; i++) {
@@ -73,39 +73,39 @@ public class ClickGui extends Screen {
             catAnim[i + 1] += ((sel ? 1f : hov ? 0.45f : 0f) - catAnim[i + 1]) * 0.25f;
             float k = catAnim[i + 1];
 
-            Draw.rr(g, sx + 6, iy, sbW - 12, 18, 9, c(0x28273A, k * 0.85f));
+            Draw.rr(g, sx + 6, iy, sbW - 12, 18, 9, c(0x1B2438, k * 0.88f));
             if (k > 0.05f) {
                 g.fill(sx + 7, iy + 4, sx + 9, iy + 14, c(acc, k));
             }
-            Draw.rr(g, sx + 13, iy + 6, 6, 6, 3, c(RenderUtil.mix(0x55546B, acc2, k), 1f));
-            Draw.text(g, nm, sx + 24, iy + 5, c(RenderUtil.mix(0xA4A3BC, 0xFFFFFF, k), 1f));
+            Draw.rr(g, sx + 13, iy + 6, 6, 6, 3, c(RenderUtil.mix(0x56627A, acc2, k), 1f));
+            Draw.text(g, nm, sx + 24, iy + 5, c(RenderUtil.mix(0xAAB5CC, 0xFFFFFF, k), 1f));
 
             String cs = String.valueOf(count);
             int pw = Draw.tw(cs) + 8;
-            Draw.rr(g, sx + sbW - 10 - pw, iy + 3, pw, 12, 6, c(sel ? acc : 0x222130, sel ? 0.35f : 0.75f));
-            Draw.text(g, cs, sx + sbW - 6 - pw, iy + 5, c(sel ? 0xFFFFFF : 0x7A7992, 1f));
+            Draw.rr(g, sx + sbW - 10 - pw, iy + 3, pw, 12, 6, c(sel ? acc : 0x161E2E, sel ? 0.35f : 0.78f));
+            Draw.text(g, cs, sx + sbW - 6 - pw, iy + 5, c(sel ? 0xFFFFFF : 0x7E8AA4, 1f));
             add(CAT, sx + 6, iy, sbW - 12, 18, i, null, null);
         }
 
         int setY = sy + 54 + (cats.length + 1) * step + 4;
         if (setY + 34 <= sy + sh - 4) {
-            Draw.text(g, "Style", sx + 10, setY, c(0x6E6D86, 1f));
+            Draw.text(g, "Style", sx + 10, setY, c(0x78849E, 1f));
             int ty = setY + 12;
             boolean hov = in(mx, my, sx + 6, ty, sbW - 12, 18);
-            Draw.rr(g, sx + 6, ty, sbW - 12, 18, 9, c(0x28273A, hov ? 0.85f : 0.45f));
+            Draw.rr(g, sx + 6, ty, sbW - 12, 18, 9, c(0x1B2438, hov ? 0.85f : 0.50f));
             Draw.rr(g, sx + 12, ty + 5, 8, 8, 4, c(acc, 1f));
-            Draw.text(g, "Theme #" + (RenderUtil.theme + 1), sx + 25, ty + 5, c(0xE0E0F0, 1f));
+            Draw.text(g, "Theme #" + (RenderUtil.theme + 1), sx + 25, ty + 5, c(0xE8EEFA, 1f));
             add(THEME, sx + 6, ty, sbW - 12, 18, 0, null, null);
         }
 
         if (sh >= 250) {
             int uy = sy + sh - 34;
-            Draw.rr(g, sx + 6, uy, sbW - 12, 28, 13, c(0x201F2E, 0.78f));
+            Draw.rr(g, sx + 6, uy, sbW - 12, 28, 13, c(0x141B2B, 0.82f));
             Draw.rr(g, sx + 12, uy + 7, 14, 14, 7, c(acc, 0.45f));
             String user = MinecraftClient.getInstance().getSession().getUsername();
             Draw.text(g, user.substring(0, 1).toUpperCase(), sx + 16, uy + 10, c(0xFFFFFF, 1f));
             Draw.text(g, user.length() > 10 ? user.substring(0, 10) : user, sx + 32, uy + 6, c(0xFFFFFF, 1f));
-            Draw.text(g, RenderUtil.NAME + " 1.21.4", sx + 32, uy + 16, c(0x7A7992, 1f));
+            Draw.text(g, "Rockstar 1.21.4", sx + 32, uy + 16, c(0x7E8AA4, 1f));
         }
 
         int mx0 = sx + sbW + pad, mw = winX + winW - pad - mx0;
@@ -116,10 +116,10 @@ public class ClickGui extends Screen {
         int msW = Draw.tw(ms) + 8;
         int pw = Math.max(64, Math.min(150, mw - msW - 95));
         int px = mx0 + mw - msW - pw;
-        Draw.rr(g, px, winY + pad + 1, pw, 16, 8, c(searching ? 0x2A293D : 0x1D1C2B, 0.82f));
+        Draw.rr(g, px, winY + pad + 1, pw, 16, 8, c(searching ? 0x222E46 : 0x151D2E, 0.85f));
         String st = search.isEmpty() && !searching ? "Search..." : search + (searching && (System.currentTimeMillis() / 500) % 2 == 0 ? "_" : "");
-        Draw.text(g, st, px + 7, winY + pad + 5, c(search.isEmpty() ? 0x5E5D76 : 0xFFFFFF, 1f));
-        Draw.text(g, ms, px + pw + 6, winY + pad + 5, c(0x6E6D86, 1f));
+        Draw.text(g, st, px + 7, winY + pad + 5, c(search.isEmpty() ? 0x67738E : 0xFFFFFF, 1f));
+        Draw.text(g, ms, px + pw + 6, winY + pad + 5, c(0x78849E, 1f));
         add(SEARCH, px, winY + pad + 1, pw, 16, 0, null, null);
 
         int cx = mx0, cy = winY + pad + 24, cw = mw, ch = winH - pad - 24 - pad;
@@ -157,7 +157,7 @@ public class ClickGui extends Screen {
         if (maxScroll > 0) {
             int bh = Math.max(14, (int) (ch * (ch / total)));
             int by = cy + (int) ((ch - bh) * (scroll / maxScroll));
-            Draw.rr(g, cx + cw - 3, by, 2, bh, 1, c(acc, 0.8f));
+            Draw.rr(g, cx + cw - 3, by, 2, bh, 1, c(acc, 0.85f));
         }
         if (slider != null) setSlider(slider, mx);
     }
@@ -165,11 +165,11 @@ public class ClickGui extends Screen {
     private void drawCard(DrawContext g, Module m, int x, int y, int w, int h, int acc, int acc2) {
         float k = m.animOn;
         if (k > 0.04f) {
-            Draw.rr(g, x - 1, y - 1, w + 2, h + 2, 13, c(acc, 0.25f * k));
+            Draw.rr(g, x - 1, y - 1, w + 2, h + 2, 13, c(acc, 0.28f * k));
         }
-        Draw.rr(g, x, y, w, h, 12, c(0x191825, 0.76f));
-        Draw.rr(g, x + 8, y + 9, 8, 8, 4, c(RenderUtil.mix(0x46455C, acc2, k), 1f));
-        Draw.text(g, m.name, x + 21, y + 9, c(RenderUtil.mix(0x9A99B4, 0xFFFFFF, k), 1f));
+        Draw.rr(g, x, y, w, h, 12, c(0x121826, 0.80f));
+        Draw.rr(g, x + 8, y + 9, 8, 8, 4, c(RenderUtil.mix(0x4E5A72, acc2, k), 1f));
+        Draw.text(g, m.name, x + 21, y + 9, c(RenderUtil.mix(0xA4AFC4, 0xFFFFFF, k), 1f));
 
         int right = x + w - 8;
         if (m.action) {
@@ -177,33 +177,33 @@ public class ClickGui extends Screen {
             Draw.text(g, "USE", right - 20, y + 9, c(0xFFFFFF, 1f));
             right -= 32;
         } else {
-            Draw.rr(g, right - 22, y + 7, 22, 12, 6, c(RenderUtil.mix(0x323142, acc, k), 0.9f));
-            Draw.rr(g, right - 21 + (int) (k * 10), y + 8, 10, 10, 5, c(0xF5F5FF, 1f));
+            Draw.rr(g, right - 22, y + 7, 22, 12, 6, c(RenderUtil.mix(0x283248, acc, k), 0.92f));
+            Draw.rr(g, right - 21 + (int) (k * 10), y + 8, 10, 10, 5, c(0xF6F8FF, 1f));
             right -= 28;
         }
         add(TOGGLE, x, y, w, 26, 0, m, null);
 
         String bl = binding == m ? "..." : (m.key > 0 ? keyName(m.key) : "None");
         int bw = Draw.tw(bl) + 10;
-        Draw.rr(g, right - bw, y + 7, bw, 12, 6, c(0x232232, 0.85f));
-        Draw.text(g, bl, right - bw + 5, y + 9, c(binding == m ? 0xFFFFFF : 0x7A7992, 1f));
+        Draw.rr(g, right - bw, y + 7, bw, 12, 6, c(0x1A2234, 0.88f));
+        Draw.text(g, bl, right - bw + 5, y + 9, c(binding == m ? 0xFFFFFF : 0x7E8AA4, 1f));
         add(BIND, right - bw, y + 7, bw, 12, 0, m, null);
 
         int ry = y + 26;
         for (Setting s : m.settings) {
             if (s.bool) {
-                Draw.text(g, s.name, x + 8, ry + 4, c(0xE4E4F2, 1f));
+                Draw.text(g, s.name, x + 8, ry + 4, c(0xE8EEF8, 1f));
                 box(g, x + w - 20, ry + 2, s.on(), acc);
                 add(BOOL, x, ry, w, 16, 0, m, s);
                 ry += 16;
             } else {
                 String v = s.options != null ? s.options[Math.max(0, Math.min(s.options.length - 1, (int) Math.round(s.value)))] : String.format("%.1f", s.value);
-                Draw.text(g, s.name, x + 8, ry + 3, c(0xE4E4F2, 1f));
+                Draw.text(g, s.name, x + 8, ry + 3, c(0xE8EEF8, 1f));
                 Draw.text(g, v, x + w - 8 - Draw.tw(v), ry + 3, c(acc2, 1f));
                 int tx = x + 8, tw = w - 16, ty = ry + 16;
                 float f = (float) ((s.value - s.min) / (s.max - s.min));
                 int fw = (int) (tw * f);
-                Draw.rr(g, tx, ty, tw, 3, 1, c(0x29283A, 0.9f));
+                Draw.rr(g, tx, ty, tw, 3, 1, c(0x202A3E, 0.92f));
                 Draw.rr(g, tx, ty, Math.max(fw, 3), 3, 1, c(acc, 1f));
                 Draw.rr(g, tx + fw - 3, ty - 2, 7, 7, 3, c(0xFFFFFF, 1f));
                 add(SLIDER, tx, ry, tw, 24, 0, m, s);
@@ -295,12 +295,12 @@ public class ClickGui extends Screen {
     }
 
     private void box(DrawContext g, int x, int y, boolean on, int acc) {
-        Draw.rr(g, x, y, 12, 12, 6, c(on ? acc : 0x2B2A3B, 0.9f));
+        Draw.rr(g, x, y, 12, 12, 6, c(on ? acc : 0x222C42, 0.92f));
         if (on) {
             Draw.line(g, x + 3, y + 6, x + 5, y + 8, c(0xFFFFFF, 1f));
             Draw.line(g, x + 5, y + 8, x + 9, y + 3, c(0xFFFFFF, 1f));
         } else {
-            Draw.rr(g, x + 4, y + 4, 4, 4, 2, c(0x55546B, 1f));
+            Draw.rr(g, x + 4, y + 4, 4, 4, 2, c(0x56627A, 1f));
         }
     }
 
@@ -316,8 +316,8 @@ public class ClickGui extends Screen {
         return switch (c) {
             case COMBAT -> "Combat";
             case MOVEMENT -> "Movement";
-            case VISUALS -> "Render";
-            case PLAYER -> "Player";
+            case VISUALS -> "Visuals";
+            case PLAYER -> "Assist";
             case SERVER -> "Server";
             case MISC -> "Misc";
         };

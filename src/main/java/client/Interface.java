@@ -10,13 +10,13 @@ public class Interface extends Module {
     private int lastTheme = -1;
 
     public final Setting colorTheme = add(Setting.num("Color theme", 0, 0, 4));
-    public final Setting opacity    = add(Setting.num("Glass opacity", 0.72, 0.25, 0.95));
-    public final Setting info       = add(Setting.bool("Info panel", true));
+    public final Setting opacity    = add(Setting.num("Glass opacity", 0.78, 0.25, 0.95));
+    public final Setting info       = add(Setting.bool("Dynamic Island", true));
     public final Setting target     = add(Setting.bool("Target-hud", true));
     public final Setting potions    = add(Setting.bool("Potions", true));
     public final Setting cooldowns  = add(Setting.bool("Cooldowns", true));
-    public final Setting hotkeys    = add(Setting.bool("Hot-keys", true));
-    public final Setting env        = add(Setting.bool("Environment", true));
+    public final Setting hotkeys    = add(Setting.bool("Binds", true));
+    public final Setting env        = add(Setting.bool("Players", true));
     public final Setting items      = add(Setting.bool("Items", true));
     public final Setting armor      = add(Setting.bool("Armor", true));
     public final Setting keys       = add(Setting.bool("Keys", true));

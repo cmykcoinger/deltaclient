@@ -19,11 +19,12 @@ public class KillAura extends Module {
     public static LivingEntity target;
     public static boolean noSprint;
 
+    private final Setting mode        = add(Setting.mode("Aura mode", 0, "Rockstar Smart", "Neural / AI", "Legit Snap"));
     private final Setting range       = add(Setting.num("Range", 3.1, 2.0, 4.5));
-    private final Setting fov         = add(Setting.num("FOV", 120, 30, 180));
-    private final Setting smooth      = add(Setting.num("Smoothness", 6.5, 1.5, 20.0));
-    private final Setting maxSpeed    = add(Setting.num("Max speed", 28, 5, 90));
-    private final Setting jitter      = add(Setting.num("Human jitter", 1.1, 0.0, 4.0));
+    private final Setting fov         = add(Setting.num("FOV", 115, 30, 180));
+    private final Setting smooth      = add(Setting.num("Smoothness", 7.0, 1.5, 20.0));
+    private final Setting maxSpeed    = add(Setting.num("Max speed", 30, 5, 90));
+    private final Setting jitter      = add(Setting.num("Neural jitter", 0.9, 0.0, 4.0));
     private final Setting crits       = add(Setting.bool("Smart crits", true));
     private final Setting onlyCrits   = add(Setting.bool("Only crits", false));
     private final Setting sprintReset = add(Setting.bool("Sprint reset", true));
@@ -66,9 +67,12 @@ public class KillAura extends Module {
 
     private Vec3d bestHitPoint(Vec3d eye, LivingEntity e, float td) {
         Vec3d base = e.getLerpedPos(td);
-        double w = e.getWidth() * 0.35;
+        double w = e.getWidth() * 0.34;
         double h = e.getHeight();
-        Box box = new Box(base.x - w, base.y + h * 0.15, base.z - w, base.x + w, base.y + h * 0.85, base.z + w);
+        int auraMode = (int) Math.round(mode.value);
+        double yMin = auraMode == 1 ? h * 0.22 : h * 0.15;
+        double yMax = auraMode == 1 ? h * 0.78 : h * 0.85;
+        Box box = new Box(base.x - w, base.y + yMin, base.z - w, base.x + w, base.y + yMax, base.z + w);
         return new Vec3d(
                 MathHelper.clamp(eye.x, box.minX, box.maxX),
                 MathHelper.clamp(eye.y, box.minY, box.maxY),
@@ -107,8 +111,8 @@ public class KillAura extends Module {
             double fovDiff = Math.hypot(MathHelper.wrapDegrees(ang[0] - p.getYaw()), ang[1] - p.getPitch());
             if (fovDiff > fov.value / 2.0) continue;
 
-            int mode = (int) Math.round(priority.value);
-            double score = switch (mode) {
+            int prio = (int) Math.round(priority.value);
+            double score = switch (prio) {
                 case 1 -> le.getHealth() + le.getAbsorptionAmount();
                 case 2 -> fovDiff;
                 default -> dist;
@@ -122,20 +126,23 @@ public class KillAura extends Module {
         target = best;
         if (target == null) return;
 
+        int auraMode = (int) Math.round(mode.value);
         long now = System.currentTimeMillis();
         if (now >= nextNoiseTime) {
-            double j = jitter.value;
+            double j = auraMode == 1 ? jitter.value * 0.72 : jitter.value;
             noiseYaw = (float) ThreadLocalRandom.current().nextDouble(-j, j);
-            noisePitch = (float) ThreadLocalRandom.current().nextDouble(-j * 0.65, j * 0.65);
-            nextNoiseTime = now + ThreadLocalRandom.current().nextLong(70, 160);
+            noisePitch = (float) ThreadLocalRandom.current().nextDouble(-j * 0.6, j * 0.6);
+            nextNoiseTime = now + ThreadLocalRandom.current().nextLong(65, 150);
         }
 
         float[] want = anglesTo(eye, bestHitPoint(eye, target, 1.0f));
         float err = (float) Math.hypot(MathHelper.wrapDegrees(want[0] - p.getYaw()), want[1] - p.getPitch());
-        if (err > 14f) return;
+        float maxAimErr = auraMode == 2 ? 9.5f : 14f;
+        if (err > maxAimErr) return;
 
         if (now < nextAttackAllowed) return;
-        if (p.getAttackCooldownProgress(0.5f) < 0.93f) return;
+        float cdThreshold = auraMode == 1 ? 0.94f : 0.93f;
+        if (p.getAttackCooldownProgress(0.5f) < cdThreshold) return;
 
         if (crits.on() && !critBlocked(p)) {
             boolean air = !p.isOnGround();
@@ -167,7 +174,7 @@ public class KillAura extends Module {
 
         mc.interactionManager.attackEntity(p, target);
         p.swingHand(Hand.MAIN_HAND);
-        nextAttackAllowed = now + ThreadLocalRandom.current().nextLong(12, 38);
+        nextAttackAllowed = now + ThreadLocalRandom.current().nextLong(14, 40);
     }
 
     private void tryBreakShield(MinecraftClient mc, net.minecraft.client.network.ClientPlayerEntity p) {
@@ -208,8 +215,12 @@ public class KillAura extends Module {
         float dp = MathHelper.clamp(want[1] + noisePitch, -89.5f, 89.5f) - p.getPitch();
         if (Math.hypot(dy, dp) < 0.15) return;
 
-        float k = 1f - (float) Math.exp(-(32.0 / smooth.value) * dt);
-        float maxStep = (float) (maxSpeed.value * 22.0 * dt);
+        int auraMode = (int) Math.round(mode.value);
+        double effSmooth = auraMode == 1 ? smooth.value * 1.15 : (auraMode == 2 ? smooth.value * 0.75 : smooth.value);
+        double effSpeed = auraMode == 2 ? maxSpeed.value * 1.25 : maxSpeed.value;
+
+        float k = 1f - (float) Math.exp(-(32.0 / effSmooth) * dt);
+        float maxStep = (float) (effSpeed * 22.0 * dt);
 
         double sens = mc.options.getMouseSensitivity().getValue() * 0.6 + 0.2;
         double gcd = sens * sens * sens * 1.2;

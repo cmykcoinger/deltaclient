@@ -9,14 +9,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TargetESP extends Module {
-    private final Setting mode   = add(Setting.mode("Style", 0, "Ghosts + Helix", "Dual Helix", "Ghosts Only"));
-    private final Setting hold   = add(Setting.num("Hold (sec)", 3.5, 0.5, 10.0));
-    private final Setting trailS = add(Setting.num("Trail length", 16, 6, 28));
-    private final Setting radius = add(Setting.num("Radius scale", 1.0, 0.6, 1.6));
+    private final Setting styleMode = add(Setting.mode("Crystal style", 0, "Crystals + Halo", "Crystal Halo", "Floating Gems"));
+    private final Setting hold      = add(Setting.num("Hold (sec)", 3.5, 0.5, 10.0));
+    private final Setting gemsCount = add(Setting.num("Gems", 4, 2, 8));
+    private final Setting radius    = add(Setting.num("Radius scale", 1.0, 0.6, 1.6));
 
     public TargetESP() {
         super("TargetESP", Category.VISUALS);
         enabled = true;
+    }
+
+    private static void drawCrystal(Matrix4f m, Vec3d c, double rx, double ry, double rz, int col) {
+        Vec3d top = c.add(0, ry, 0);
+        Vec3d bot = c.add(0, -ry, 0);
+        Vec3d n = c.add(0, 0, -rz);
+        Vec3d s = c.add(0, 0, rz);
+        Vec3d e = c.add(rx, 0, 0);
+        Vec3d w = c.add(-rx, 0, 0);
+
+        RenderUtil.strip(m, List.of(n, e, s, w, n), col);
+        RenderUtil.strip(m, List.of(top, n, bot, s, top), col);
+        RenderUtil.strip(m, List.of(top, e, bot, w, top), col);
     }
 
     @Override
@@ -33,75 +46,51 @@ public class TargetESP extends Module {
         double y = MathHelper.lerp(delta, t.prevY, t.getY());
         double z = MathHelper.lerp(delta, t.prevZ, t.getZ());
         double h = t.getHeight();
-        double baseR = t.getWidth() * 0.85 * radius.value;
+        double baseR = t.getWidth() * 0.9 * radius.value;
         double time = System.currentTimeMillis() / 1000.0;
-        int n = (int) trailS.value;
         boolean hurt = t.hurtTime > 0;
-        int style = (int) Math.round(mode.value);
+        int st = (int) Math.round(styleMode.value);
+        int count = Math.max(2, (int) Math.round(gemsCount.value));
 
         RenderUtil.begin3D();
 
-        double pulse = 1.0 + Math.sin(time * 4.0) * 0.07;
-        for (int ringIdx = 0; ringIdx < 2; ringIdx++) {
-            double rr = baseR * (ringIdx == 0 ? pulse : pulse * 0.72);
-            double ry = y + 0.03 + ringIdx * 0.02;
-            float ringAlpha = a * (ringIdx == 0 ? 0.9f : 0.45f);
-            List<Vec3d> ringPts = new ArrayList<>();
+        if (st == 0 || st == 1) {
+            double haloR = baseR * (1.0 + Math.sin(time * 3.5) * 0.05);
+            double haloY = y + h * 0.55 + Math.cos(time * 2.4) * (h * 0.22);
+            List<Vec3d> haloPts = new ArrayList<>();
             for (int i = 0; i <= 48; i++) {
-                double ang = i * Math.PI * 2.0 / 48.0 + (ringIdx == 0 ? time : -time);
-                ringPts.add(new Vec3d(x + Math.cos(ang) * rr, ry, z + Math.sin(ang) * rr));
+                double ang = i * Math.PI * 2.0 / 48.0 + time * 1.4;
+                haloPts.add(new Vec3d(x + Math.cos(ang) * haloR, haloY, z + Math.sin(ang) * haloR));
             }
-            RenderUtil.stripColored(m, ringPts, i -> {
-                int col = hurt ? 0xFF3545 : RenderUtil.accent(i * 0.025f);
-                return RenderUtil.alpha(col, ringAlpha);
+            RenderUtil.stripColored(m, haloPts, i -> {
+                int col = hurt ? 0xFF3B52 : RenderUtil.accent(i * 0.025f);
+                return RenderUtil.alpha(col, a * 0.85f);
             });
         }
 
-        if (style == 0 || style == 1) {
-            for (int strand = 0; strand < 2; strand++) {
-                List<Vec3d> helix = new ArrayList<>();
-                int segs = 32;
-                for (int i = 0; i <= segs; i++) {
-                    double frac = i / (double) segs;
-                    double ang = frac * Math.PI * 2.5 + time * 3.0 + strand * Math.PI;
-                    double waveY = y + ((frac + time * 0.45) % 1.0) * h;
-                    double rr = baseR * (0.95 + Math.sin(frac * Math.PI) * 0.18);
-                    helix.add(new Vec3d(x + Math.cos(ang) * rr, waveY, z + Math.sin(ang) * rr));
-                }
-                final int st = strand;
-                RenderUtil.stripColored(m, helix, i -> {
-                    float fade = (float) Math.sin((i / (double) segs) * Math.PI);
-                    int col = hurt ? 0xFF4555 : RenderUtil.accent(st * 0.35f + i * 0.02f);
-                    return RenderUtil.alpha(col, a * fade * 0.85f);
-                });
-            }
-        }
+        if (st == 0 || st == 1 || st == 2) {
+            for (int g = 0; g < count; g++) {
+                double phase = time * 2.1 + g * (Math.PI * 2.0 / count);
+                double orbitR = baseR + 0.34 + Math.sin(phase * 1.5) * 0.08;
+                double gemY = y + h * 0.52 + Math.sin(phase * 1.3 + g) * (h * 0.38);
+                Vec3d center = new Vec3d(x + Math.cos(phase) * orbitR, gemY, z + Math.sin(phase) * orbitR);
 
-        if (style == 0 || style == 2) {
-            for (int g = 0; g < 3; g++) {
-                List<Vec3d> pts = new ArrayList<>();
-                for (int k = 0; k < n + 8; k++) {
-                    double ph = time * 2.3 + g * 2.094 - k * 0.075;
-                    double rr = baseR + 0.28 + Math.sin(ph * 2.2 + g) * 0.12;
-                    double py = y + h * 0.52 + Math.sin(ph * 1.65 + g * 1.7) * (h * 0.44);
-                    pts.add(new Vec3d(x + Math.cos(ph) * rr, py, z + Math.sin(ph) * rr));
-                }
-                final int gg = g, len = pts.size();
-                final float aa = a;
-                RenderUtil.stripColored(m, pts, i -> {
-                    float tNorm = 1f - i / (float) len;
-                    int col = hurt ? 0xFF4B5C : RenderUtil.accent(gg * 0.28f + i * 0.015f);
-                    return RenderUtil.alpha(col, aa * (tNorm * tNorm));
-                });
+                int gemCol = RenderUtil.alpha(hurt ? 0xFF5A70 : RenderUtil.accent(g * 0.22f), a * 0.95f);
+                drawCrystal(m, center, 0.085, 0.145, 0.085, gemCol);
 
-                Vec3d p0 = pts.get(0);
-                double s = 0.075;
-                int headCol = RenderUtil.alpha(hurt ? 0xFF8899 : 0xFFFFFF, aa);
-                Vec3d top = p0.add(0, s, 0), bot = p0.add(0, -s, 0);
-                Vec3d e1 = p0.add(s, 0, 0), e2 = p0.add(0, 0, s), e3 = p0.add(-s, 0, 0), e4 = p0.add(0, 0, -s);
-                RenderUtil.strip(m, List.of(e1, e2, e3, e4, e1), headCol);
-                RenderUtil.strip(m, List.of(top, e1, bot, e3, top), headCol);
-                RenderUtil.strip(m, List.of(top, e2, bot, e4, top), headCol);
+                List<Vec3d> tail = new ArrayList<>();
+                for (int k = 0; k <= 8; k++) {
+                    double tp = phase - k * 0.065;
+                    double tr = baseR + 0.34 + Math.sin(tp * 1.5) * 0.08;
+                    double ty = y + h * 0.52 + Math.sin(tp * 1.3 + g) * (h * 0.38);
+                    tail.add(new Vec3d(x + Math.cos(tp) * tr, ty, z + Math.sin(tp) * tr));
+                }
+                final int gg = g;
+                RenderUtil.stripColored(m, tail, idx -> {
+                    float fade = 1f - idx / 8f;
+                    int col = hurt ? 0xFF3B52 : RenderUtil.accent(gg * 0.22f + idx * 0.02f);
+                    return RenderUtil.alpha(col, a * fade * fade * 0.65f);
+                });
             }
         }
 
