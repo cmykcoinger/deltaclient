@@ -48,12 +48,12 @@ public class Hud {
 
     private static int bgAlpha() {
         Interface ui = Interface.I;
-        double op = ui != null ? ui.opacity.value : 0.78;
-        return ((int) MathHelper.clamp(op * 255.0, 50, 245)) << 24;
+        double op = ui != null ? ui.opacity.value : 0.82;
+        return ((int) MathHelper.clamp(op * 255.0, 60, 248)) << 24;
     }
 
-    private static int islandBg() {
-        return bgAlpha() | 0x0C111E;
+    private static int panelBg() {
+        return bgAlpha() | 0x0E1320;
     }
 
     public static void render(DrawContext g, RenderTickCounter tc) {
@@ -101,18 +101,17 @@ public class Hud {
             var e = nh.getPlayerListEntry(mc.player.getUuid());
             if (e != null) ping = e.getLatency();
         }
-        String label = mc.getSession().getUsername() + "  /  " + ping + " ms  /  " + mc.getCurrentFps() + " FPS";
-        int w = Draw.tw(label) + 26;
+        String label = "Rockstar  |  " + mc.getSession().getUsername() + "  |  " + ping + "ms  |  " + mc.getCurrentFps() + "fps";
+        int w = Draw.tw(label) + 18;
         int h = 15;
         INFO.w = w;
         INFO.h = h;
         INFO.on = true;
 
         int x = INFO.x, y = INFO.y;
-        Draw.rr(g, x - 1, y - 1, w + 2, h + 2, 9, 0x33000000);
-        Draw.rr(g, x, y, w, h, 8, islandBg());
-        Draw.dot(g, x + 8, y + 8, 3, 0xFF000000 | acc);
-        Draw.text(g, label, x + 16, y + 4, 0xFFF2F6FF);
+        Draw.rr(g, x, y, w, h, 6, panelBg());
+        g.fill(x + 1, y + 3, x + 3, y + h - 3, 0xFF000000 | acc);
+        Draw.text(g, label, x + 8, y + 4, 0xFFF2F6FF);
     }
 
     private static void panel(DrawContext g, Elem e, String title, List<String> left, List<String> right, boolean edit) {
@@ -120,14 +119,14 @@ public class Hud {
         if (!has && !edit) return;
         e.on = true;
         int acc = RenderUtil.THEMES[RenderUtil.theme][0] & 0xFFFFFF;
-        int maxw = Draw.tw(title) + 22;
-        for (int i = 0; i < left.size(); i++) maxw = Math.max(maxw, Draw.tw(left.get(i)) + Draw.tw(right.get(i)) + 22);
-        Draw.rr(g, e.x, e.y, maxw, 14, 7, islandBg());
-        Draw.dot(g, e.x + 7, e.y + 7, 2, 0xFF000000 | acc);
-        Draw.text(g, title, e.x + 13, e.y + 3, 0xFFFFFFFF);
+        int maxw = Draw.tw(title) + 16;
+        for (int i = 0; i < left.size(); i++) maxw = Math.max(maxw, Draw.tw(left.get(i)) + Draw.tw(right.get(i)) + 18);
+        Draw.rr(g, e.x, e.y, maxw, 14, 6, panelBg());
+        g.fill(e.x + 1, e.y + 3, e.x + 3, e.y + 11, 0xFF000000 | acc);
+        Draw.text(g, title, e.x + 7, e.y + 3, 0xFFFFFFFF);
         int y = e.y + 16;
         if (has) {
-            Draw.rr(g, e.x, y, maxw, left.size() * 11 + 6, 8, islandBg());
+            Draw.rr(g, e.x, y, maxw, left.size() * 11 + 6, 6, panelBg());
             for (int i = 0; i < left.size(); i++) {
                 Draw.text(g, left.get(i), e.x + 7, y + 4 + i * 11, 0xFFE6ECF8);
                 Draw.text(g, right.get(i), e.x + maxw - 7 - Draw.tw(right.get(i)), y + 4 + i * 11, 0xFF000000 | acc);
@@ -189,20 +188,20 @@ public class Hud {
 
         int x = TARGET.x, y = TARGET.y, w = TARGET.w, h = TARGET.h;
         TARGET.on = true;
-        Draw.rr(g, x - 1, y - 1, w + 2, h + 2, 12, 0x33000000);
-        Draw.rr(g, x, y, w, h, 11, islandBg());
+        Draw.rr(g, x, y, w, h, 8, panelBg());
+        g.fill(x + 1, y + 4, x + 3, y + h - 4, 0xFF000000 | acc);
 
         if (t instanceof AbstractClientPlayerEntity pl) {
-            PlayerSkinDrawer.draw(g, pl.getSkinTextures(), x + 6, y + 7, 24);
+            PlayerSkinDrawer.draw(g, pl.getSkinTextures(), x + 7, y + 7, 24);
         } else {
-            Draw.rr(g, x + 6, y + 7, 24, 24, 12, 0x88162034);
-            Draw.text(g, t.getName().getString().substring(0, 1), x + 16, y + 15, 0xFFFFFFFF);
+            Draw.rr(g, x + 7, y + 7, 24, 24, 6, 0x88162034);
+            Draw.text(g, t.getName().getString().substring(0, 1), x + 17, y + 15, 0xFFFFFFFF);
         }
 
-        Draw.text(g, t.getName().getString(), x + 36, y + 7, 0xFFFFFFFF);
-        Draw.text(g, String.format("%.1f HP  %dm", hp, Math.round(mc.player.distanceTo(t))), x + 36, y + 18, 0xFF9EB0CC);
+        Draw.text(g, t.getName().getString(), x + 37, y + 7, 0xFFFFFFFF);
+        Draw.text(g, String.format("%.1f HP  %dm", hp, Math.round(mc.player.distanceTo(t))), x + 37, y + 18, 0xFF9EB0CC);
 
-        int barX = x + 36, barY = y + 30, barW = w - 44;
+        int barX = x + 37, barY = y + 30, barW = w - 45;
         Draw.rr(g, barX, barY, barW, 4, 2, 0x66222E44);
         Draw.rr(g, barX, barY, Math.max(4, (int) (barW * ratio)), 4, 2, 0xFF000000 | RenderUtil.mix(acc, acc2, ratio));
     }
@@ -216,14 +215,14 @@ public class Hud {
             for (int i = 0; i < inv.size(); i++) { ItemStack s = inv.getStack(i); if (s.isOf(it)) n += s.getCount(); }
             String t = n > 0 ? String.valueOf(n) : "0";
             int w = 28 + Draw.tw(t);
-            Draw.rr(g, x, ITEMS.y, w, 15, 7, islandBg());
+            Draw.rr(g, x, ITEMS.y, w, 15, 6, panelBg());
             g.getMatrices().push();
             g.getMatrices().translate(x + 3f, ITEMS.y + 2f, 0f);
             g.getMatrices().scale(0.75f, 0.75f, 1f);
             g.drawItem(new ItemStack(it), 0, 0);
             g.getMatrices().pop();
             Draw.text(g, t, x + 18, ITEMS.y + 4, n > 0 ? 0xFFFFFFFF : 0xFF7E8AA4);
-            g.fill(x + 6, ITEMS.y + 14, x + w - 6, ITEMS.y + 15, 0x99000000 | acc);
+            g.fill(x + 5, ITEMS.y + 14, x + w - 5, ITEMS.y + 15, 0xCC000000 | acc);
             x += w + 4;
         }
         ITEMS.w = x - ITEMS.x - 4; ITEMS.h = 15; ITEMS.on = true;
@@ -231,11 +230,11 @@ public class Hud {
 
     private static void armor(DrawContext g, MinecraftClient mc) {
         EquipmentSlot[] slots = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
-        Draw.rr(g, ARMOR.x, ARMOR.y, ARMOR.w, ARMOR.h, 9, islandBg());
+        Draw.rr(g, ARMOR.x, ARMOR.y, ARMOR.w, ARMOR.h, 7, panelBg());
         for (int i = 0; i < 4; i++) {
             ItemStack s = mc.player.getEquippedStack(slots[i]);
             int ix = ARMOR.x + 4 + i * 20, iy = ARMOR.y + 3;
-            if (s.isEmpty()) { Draw.rr(g, ix + 2, iy + 2, 12, 12, 6, 0x551A2438); continue; }
+            if (s.isEmpty()) { Draw.rr(g, ix + 2, iy + 2, 12, 12, 4, 0x551A2438); continue; }
             g.drawItem(s, ix, iy);
             if (s.getMaxDamage() > 0) {
                 float f = 1f - s.getDamage() / (float) s.getMaxDamage();
@@ -260,7 +259,7 @@ public class Hud {
     }
 
     private static void keyW(DrawContext g, int x, int y, int w, String t, boolean on, int acc) {
-        Draw.rr(g, x, y, w, 16, 7, on ? (0xCC000000 | acc) : islandBg());
+        Draw.rr(g, x, y, w, 16, 5, on ? (0xCC000000 | acc) : panelBg());
         Draw.text(g, t, x + (w - Draw.tw(t)) / 2, y + 4, on ? 0xFF060A12 : 0xFFC4D0E6);
     }
 

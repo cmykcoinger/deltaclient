@@ -19,25 +19,26 @@ public class KillAura extends Module {
     public static LivingEntity target;
     public static boolean noSprint;
 
-    private final Setting mode        = add(Setting.mode("Aura mode", 0, "Rockstar Smart", "Neural / AI", "Legit Snap"));
-    private final Setting range       = add(Setting.num("Range", 3.1, 2.0, 4.5));
-    private final Setting fov         = add(Setting.num("FOV", 115, 30, 180));
-    private final Setting smooth      = add(Setting.num("Smoothness", 7.0, 1.5, 20.0));
-    private final Setting maxSpeed    = add(Setting.num("Max speed", 30, 5, 90));
-    private final Setting jitter      = add(Setting.num("Neural jitter", 0.9, 0.0, 4.0));
-    private final Setting crits       = add(Setting.bool("Smart crits", true));
-    private final Setting onlyCrits   = add(Setting.bool("Only crits", false));
+    private final Setting mode        = add(Setting.mode("Rotation", 0, "FunTime", "SpookyTime", "Rockstar Snap"));
+    private final Setting critMode    = add(Setting.mode("Criticals", 0, "Smart", "Only Crits", "No Crits"));
+    private final Setting range       = add(Setting.num("Range", 3.2, 2.0, 4.5));
+    private final Setting fov         = add(Setting.num("FOV", 360, 30, 360));
+    private final Setting speed       = add(Setting.num("Aim speed", 16.0, 3.0, 35.0));
+    private final Setting jitter      = add(Setting.num("Micro jitter", 0.55, 0.0, 3.0));
     private final Setting sprintReset = add(Setting.bool("Sprint reset", true));
     private final Setting shieldBreak = add(Setting.bool("Shield break", true));
     private final Setting walls       = add(Setting.bool("Through walls", false));
     private final Setting playersOnly = add(Setting.bool("Players only", true));
     private final Setting priority    = add(Setting.mode("Priority", 0, "Distance", "Health", "FOV"));
 
-    private int airTicks;
+    private float rotYaw;
+    private float rotPitch;
+    private boolean rotActive;
     private float noiseYaw;
     private float noisePitch;
     private long nextNoiseTime;
-    private long nextAttackAllowed;
+    private long nextAttackTime;
+    private boolean sprintDroppedForAttack;
 
     public KillAura() {
         super("KillAura", Category.COMBAT);
@@ -48,14 +49,21 @@ public class KillAura extends Module {
     public void onEnable() {
         target = null;
         noSprint = false;
-        noiseYaw = 0f;
-        noisePitch = 0f;
+        rotActive = false;
+        sprintDroppedForAttack = false;
+        var p = MinecraftClient.getInstance().player;
+        if (p != null) {
+            rotYaw = p.getYaw();
+            rotPitch = p.getPitch();
+        }
     }
 
     @Override
     public void onDisable() {
         target = null;
         noSprint = false;
+        rotActive = false;
+        sprintDroppedForAttack = false;
     }
 
     private static float[] anglesTo(Vec3d from, Vec3d to) {
@@ -65,19 +73,76 @@ public class KillAura extends Module {
         return new float[]{yaw, pitch};
     }
 
-    private Vec3d bestHitPoint(Vec3d eye, LivingEntity e, float td) {
+    private Vec3d hitSpot(Vec3d eye, LivingEntity e, float td, int rotType, double tSec) {
         Vec3d base = e.getLerpedPos(td);
-        double w = e.getWidth() * 0.34;
+        double w = e.getWidth() * 0.32;
         double h = e.getHeight();
-        int auraMode = (int) Math.round(mode.value);
-        double yMin = auraMode == 1 ? h * 0.22 : h * 0.15;
-        double yMax = auraMode == 1 ? h * 0.78 : h * 0.85;
-        Box box = new Box(base.x - w, base.y + yMin, base.z - w, base.x + w, base.y + yMax, base.z + w);
+        double yRatio = switch (rotType) {
+            case 0 -> 0.56 + Math.sin(tSec * 5.2) * 0.14;
+            case 1 -> 0.48 + Math.cos(tSec * 7.8) * 0.18;
+            default -> 0.62;
+        };
+        Box box = new Box(base.x - w, base.y + h * 0.14, base.z - w, base.x + w, base.y + h * 0.88, base.z + w);
+        double targetY = base.y + h * MathHelper.clamp(yRatio, 0.18, 0.84);
         return new Vec3d(
                 MathHelper.clamp(eye.x, box.minX, box.maxX),
-                MathHelper.clamp(eye.y, box.minY, box.maxY),
+                MathHelper.clamp(targetY, box.minY, box.maxY),
                 MathHelper.clamp(eye.z, box.minZ, box.maxZ)
         );
+    }
+
+    private void updateRotation(MinecraftClient mc, net.minecraft.client.network.ClientPlayerEntity p, LivingEntity t, float dt, float td) {
+        int rotType = (int) Math.round(mode.value);
+        double tSec = System.currentTimeMillis() / 1000.0;
+        long now = System.currentTimeMillis();
+
+        if (now >= nextNoiseTime) {
+            double j = jitter.value * (rotType == 1 ? 1.15 : (rotType == 0 ? 0.85 : 0.45));
+            noiseYaw = (float) ThreadLocalRandom.current().nextDouble(-j, j);
+            noisePitch = (float) ThreadLocalRandom.current().nextDouble(-j * 0.65, j * 0.65);
+            nextNoiseTime = now + ThreadLocalRandom.current().nextLong(45, 115);
+        }
+
+        if (!rotActive) {
+            rotYaw = p.getYaw();
+            rotPitch = p.getPitch();
+            rotActive = true;
+        }
+
+        Vec3d eye = p.getCameraPosVec(td);
+        float[] want = anglesTo(eye, hitSpot(eye, t, td, rotType, tSec));
+        float desiredYaw = want[0] + noiseYaw;
+        float desiredPitch = MathHelper.clamp(want[1] + noisePitch, -89.5f, 89.5f);
+
+        float dy = MathHelper.wrapDegrees(desiredYaw - rotYaw);
+        float dp = desiredPitch - rotPitch;
+
+        double spd = speed.value * (rotType == 2 ? 1.65 : (rotType == 1 ? 1.35 : 1.15));
+        float factor = 1f - (float) Math.exp(-spd * Math.max(dt, 0.004f));
+        float maxDeg = (float) (spd * 42.0 * Math.max(dt, 0.004f));
+
+        float stepY = MathHelper.clamp(dy * factor, -maxDeg, maxDeg);
+        float stepP = MathHelper.clamp(dp * factor, -maxDeg, maxDeg);
+
+        double sens = mc.options.getMouseSensitivity().getValue() * 0.6 + 0.2;
+        double gcd = sens * sens * sens * 1.2;
+        if (gcd > 0.0001) {
+            stepY -= (float) (stepY % gcd);
+            stepP -= (float) (stepP % gcd);
+        }
+
+        rotYaw = rotYaw + stepY;
+        rotPitch = MathHelper.clamp(rotPitch + stepP, -89.5f, 89.5f);
+    }
+
+    private boolean canCritNow(net.minecraft.client.network.ClientPlayerEntity p) {
+        if (p.isClimbing() || p.isTouchingWater() || p.isInLava() || p.hasVehicle()
+                || p.hasStatusEffect(StatusEffects.BLINDNESS) || p.getAbilities().flying) {
+            return true;
+        }
+        if (p.isOnGround()) return false;
+        if (p.getVelocity().y >= 0.02) return false;
+        return p.fallDistance > 0.03f || p.getVelocity().y < -0.06;
     }
 
     @Override
@@ -87,10 +152,10 @@ public class KillAura extends Module {
         if (p == null || mc.world == null || mc.interactionManager == null) return;
 
         noSprint = false;
-        if (p.isOnGround()) airTicks = 0; else airTicks++;
-
         if (mc.currentScreen != null || p.isUsingItem()) {
             target = null;
+            rotActive = false;
+            sprintDroppedForAttack = false;
             return;
         }
 
@@ -124,41 +189,32 @@ public class KillAura extends Module {
         }
 
         target = best;
-        if (target == null) return;
-
-        int auraMode = (int) Math.round(mode.value);
-        long now = System.currentTimeMillis();
-        if (now >= nextNoiseTime) {
-            double j = auraMode == 1 ? jitter.value * 0.72 : jitter.value;
-            noiseYaw = (float) ThreadLocalRandom.current().nextDouble(-j, j);
-            noisePitch = (float) ThreadLocalRandom.current().nextDouble(-j * 0.6, j * 0.6);
-            nextNoiseTime = now + ThreadLocalRandom.current().nextLong(65, 150);
+        if (target == null) {
+            rotActive = false;
+            sprintDroppedForAttack = false;
+            return;
         }
 
-        float[] want = anglesTo(eye, bestHitPoint(eye, target, 1.0f));
-        float err = (float) Math.hypot(MathHelper.wrapDegrees(want[0] - p.getYaw()), want[1] - p.getPitch());
-        float maxAimErr = auraMode == 2 ? 9.5f : 14f;
-        if (err > maxAimErr) return;
+        updateRotation(mc, p, target, 0.05f, 1.0f);
 
-        if (now < nextAttackAllowed) return;
-        float cdThreshold = auraMode == 1 ? 0.94f : 0.93f;
-        if (p.getAttackCooldownProgress(0.5f) < cdThreshold) return;
+        long now = System.currentTimeMillis();
+        if (now < nextAttackTime) return;
 
-        if (crits.on() && !critBlocked(p)) {
-            boolean air = !p.isOnGround();
-            if (!air && mc.options.jumpKey.isPressed()) return;
-            if (air) {
-                if (sprintReset.on()) {
+        int rotType = (int) Math.round(mode.value);
+        float cdNeed = rotType == 1 ? 0.88f : 0.90f;
+        if (p.getAttackCooldownProgress(0.5f) < cdNeed) return;
+
+        int cMode = (int) Math.round(critMode.value);
+        if (cMode == 1) {
+            if (!canCritNow(p)) {
+                if (!p.isOnGround() && p.getVelocity().y < 0.05) {
                     noSprint = true;
-                    if (p.isSprinting()) {
-                        p.setSprinting(false);
-                        return;
-                    }
+                    p.setSprinting(false);
                 }
-                boolean falling = p.fallDistance > 0.11f;
-                if (onlyCrits.on() && !falling) return;
-                if (!falling && airTicks < 20) return;
-            } else if (onlyCrits.on()) {
+                return;
+            }
+        } else if (cMode == 0) {
+            if (!p.isOnGround() && p.getVelocity().y < 0.05 && !canCritNow(p)) {
                 return;
             }
         }
@@ -168,13 +224,28 @@ public class KillAura extends Module {
             return;
         }
 
-        if (sprintReset.on() && p.isSprinting() && p.isOnGround()) {
+        if (sprintReset.on() && p.isSprinting()) {
+            noSprint = true;
             p.setSprinting(false);
+            if (!sprintDroppedForAttack && p.isOnGround()) {
+                sprintDroppedForAttack = true;
+                return;
+            }
         }
+        sprintDroppedForAttack = false;
 
+        float savedYaw = p.getYaw();
+        float savedPitch = p.getPitch();
+        p.setYaw(rotYaw);
+        p.setPitch(rotPitch);
         mc.interactionManager.attackEntity(p, target);
         p.swingHand(Hand.MAIN_HAND);
-        nextAttackAllowed = now + ThreadLocalRandom.current().nextLong(14, 40);
+        p.setYaw(savedYaw);
+        p.setPitch(savedPitch);
+
+        long minMs = rotType == 1 ? 18 : (rotType == 0 ? 22 : 12);
+        long maxMs = rotType == 1 ? 45 : (rotType == 0 ? 52 : 28);
+        nextAttackTime = now + ThreadLocalRandom.current().nextLong(minMs, maxMs);
     }
 
     private void tryBreakShield(MinecraftClient mc, net.minecraft.client.network.ClientPlayerEntity p) {
@@ -187,6 +258,10 @@ public class KillAura extends Module {
                 break;
             }
         }
+        float savedYaw = p.getYaw();
+        float savedPitch = p.getPitch();
+        p.setYaw(rotYaw);
+        p.setPitch(rotPitch);
         if (axeSlot != -1 && axeSlot != prev) {
             p.getInventory().selectedSlot = axeSlot;
             mc.interactionManager.attackEntity(p, target);
@@ -196,48 +271,23 @@ public class KillAura extends Module {
             mc.interactionManager.attackEntity(p, target);
             p.swingHand(Hand.MAIN_HAND);
         }
-        nextAttackAllowed = System.currentTimeMillis() + 60;
+        p.setYaw(savedYaw);
+        p.setPitch(savedPitch);
+        nextAttackTime = System.currentTimeMillis() + 55;
     }
 
     @Override
     public void onFrame(float dt) {
         MinecraftClient mc = MinecraftClient.getInstance();
         LivingEntity t = target;
-        if (t == null || !t.isAlive() || mc.currentScreen != null) return;
+        if (t == null || !t.isAlive() || mc.currentScreen != null) {
+            rotActive = false;
+            return;
+        }
         var p = mc.player;
         if (p == null) return;
 
         float td = mc.getRenderTickCounter().getTickDelta(false);
-        Vec3d aim = bestHitPoint(p.getCameraPosVec(td), t, td);
-        float[] want = anglesTo(p.getCameraPosVec(td), aim);
-
-        float dy = MathHelper.wrapDegrees((want[0] + noiseYaw) - p.getYaw());
-        float dp = MathHelper.clamp(want[1] + noisePitch, -89.5f, 89.5f) - p.getPitch();
-        if (Math.hypot(dy, dp) < 0.15) return;
-
-        int auraMode = (int) Math.round(mode.value);
-        double effSmooth = auraMode == 1 ? smooth.value * 1.15 : (auraMode == 2 ? smooth.value * 0.75 : smooth.value);
-        double effSpeed = auraMode == 2 ? maxSpeed.value * 1.25 : maxSpeed.value;
-
-        float k = 1f - (float) Math.exp(-(32.0 / effSmooth) * dt);
-        float maxStep = (float) (effSpeed * 22.0 * dt);
-
-        double sens = mc.options.getMouseSensitivity().getValue() * 0.6 + 0.2;
-        double gcd = sens * sens * sens * 1.2;
-
-        float stepY = MathHelper.clamp(dy * k, -maxStep, maxStep);
-        float stepP = MathHelper.clamp(dp * k, -maxStep, maxStep);
-        if (gcd > 0.0001) {
-            stepY -= (float) (stepY % gcd);
-            stepP -= (float) (stepP % gcd);
-        }
-
-        p.setYaw(p.getYaw() + stepY);
-        p.setPitch(MathHelper.clamp(p.getPitch() + stepP, -90f, 90f));
-    }
-
-    private static boolean critBlocked(net.minecraft.client.network.ClientPlayerEntity p) {
-        return p.isClimbing() || p.isTouchingWater() || p.isInLava() || p.hasVehicle()
-                || p.hasStatusEffect(StatusEffects.BLINDNESS) || p.getAbilities().flying;
+        updateRotation(mc, p, t, dt, td);
     }
 }

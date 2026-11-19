@@ -1,0 +1,32 @@
+{
+  "mappings": {
+    "client/mixin/FireOverlayMixin": {
+      "renderFireOverlay": "Lnet/minecraft/class_4603;method_23070(Lnet/minecraft/class_4587;Lnet/minecraft/class_4597;)V"
+    },
+    "client/mixin/GlowMixin": {
+      "isGlowing": "Lnet/minecraft/class_1297;method_5851()Z"
+    },
+    "client/mixin/WallOverlayMixin": {
+      "renderInWallOverlay": "Lnet/minecraft/class_4603;method_23068(Lnet/minecraft/class_1058;Lnet/minecraft/class_4587;Lnet/minecraft/class_4597;)V"
+    },
+    "client/mixin/WaterOverlayMixin": {
+      "renderUnderwaterOverlay": "Lnet/minecraft/class_4603;method_23069(Lnet/minecraft/class_310;Lnet/minecraft/class_4587;Lnet/minecraft/class_4597;)V"
+    }
+  },
+  "data": {
+    "named:intermediary": {
+      "client/mixin/FireOverlayMixin": {
+        "renderFireOverlay": "Lnet/minecraft/class_4603;method_23070(Lnet/minecraft/class_4587;Lnet/minecraft/class_4597;)V"
+      },
+      "client/mixin/GlowMixin": {
+        "isGlowing": "Lnet/minecraft/class_1297;method_5851()Z"
+      },
+      "client/mixin/WallOverlayMixin": {
+        "renderInWallOverlay": "Lnet/minecraft/class_4603;method_23068(Lnet/minecraft/class_1058;Lnet/minecraft/class_4587;Lnet/minecraft/class_4597;)V"
+      },
+      "client/mixin/WaterOverlayMixin": {
+        "renderUnderwaterOverlay": "Lnet/minecraft/class_4603;method_23069(Lnet/minecraft/class_310;Lnet/minecraft/class_4587;Lnet/minecraft/class_4597;)V"
+      }
+    }
+  }
+}
