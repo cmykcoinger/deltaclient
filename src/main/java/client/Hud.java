@@ -27,7 +27,7 @@ public class Hud {
         Elem(String n, int w, int h) { name = n; this.w = w; this.h = h; }
     }
     public static final Elem INFO = new Elem("Info", 240, 31);
-    public static final Elem TARGET = new Elem("Target-hud", 150, 36);
+    public static final Elem TARGET = new Elem("Target-hud", 160, 42);
     public static final Elem POTIONS = new Elem("Potion-list", 90, 14);
     public static final Elem COOLDOWNS = new Elem("Cooldowns", 90, 14);
     public static final Elem HOTKEYS = new Elem("Hot-keys", 90, 14);
@@ -48,6 +48,16 @@ public class Hud {
     private static int offX, offY;
     private static boolean wasDown;
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+    private static int bgAlpha() {
+        Interface ui = Interface.I;
+        double op = ui != null ? ui.opacity.value : 0.72;
+        return ((int) MathHelper.clamp(op * 255.0, 40, 245)) << 24;
+    }
+
+    private static int glassBg() {
+        return bgAlpha() | 0x111019;
+    }
 
     public static void render(DrawContext g, RenderTickCounter tc) {
         MinecraftClient mc = MinecraftClient.getInstance();
@@ -86,7 +96,17 @@ public class Hud {
         if (ui.notif.on()) Notifications.render(g);
     }
 
-    // ---------------------------------------------------------------- info
+    private static int glassChip(DrawContext g, int x, int y, String t, int accRgb, int textArgb) {
+        int w = Draw.chipW(t);
+        Draw.rr(g, x - 1, y - 1, w + 2, 16, 8, 0x26000000);
+        Draw.rr(g, x, y, w, 14, 7, glassBg());
+        Draw.dot(g, x + 9, y + 7, 3, 0xFF000000 | (accRgb & 0xFFFFFF));
+        g.fill(x + 16, y + 4, x + 17, y + 10, 0x55484860);
+        Draw.text(g, t, x + 21, y + 3, textArgb);
+        g.fill(x + 9, y + 13, x + w - 9, y + 14, 0xAA000000 | (accRgb & 0xFFFFFF));
+        return w;
+    }
+
     private static void info(DrawContext g, MinecraftClient mc) {
         int acc = RenderUtil.THEMES[RenderUtil.theme][0];
         int ping = 0;
@@ -105,11 +125,10 @@ public class Hud {
     private static void row(DrawContext g, String[] r, int x, int y, int acc) {
         for (int i = 0; i < r.length; i++) {
             int col = (i == 0) ? (0xFF000000 | acc) : 0xFFFFFFFF;
-            x += Draw.chip(g, x, y, r[i], acc, col) + 4;
+            x += glassChip(g, x, y, r[i], acc, col) + 4;
         }
     }
 
-    // ---------------------------------------------------------------- panels
     private static void panel(DrawContext g, Elem e, String title, List<String> left, List<String> right, boolean edit) {
         boolean has = !left.isEmpty();
         if (!has && !edit) return;
@@ -117,10 +136,10 @@ public class Hud {
         int acc = RenderUtil.THEMES[RenderUtil.theme][0];
         int maxw = Draw.chipW(title);
         for (int i = 0; i < left.size(); i++) maxw = Math.max(maxw, Draw.tw(left.get(i)) + Draw.tw(right.get(i)) + 24);
-        Draw.chip(g, e.x, e.y, title, acc, 0xFFFFFFFF);
+        glassChip(g, e.x, e.y, title, acc, 0xFFFFFFFF);
         int y = e.y + 17;
         if (has) {
-            Draw.rr(g, e.x, y, maxw, left.size() * 11 + 6, 9, 0xC8141420);
+            Draw.rr(g, e.x, y, maxw, left.size() * 11 + 6, 9, glassBg());
             for (int i = 0; i < left.size(); i++) {
                 Draw.text(g, left.get(i), e.x + 7, y + 4 + i * 11, 0xFFE6E6F2);
                 Draw.text(g, right.get(i), e.x + maxw - 7 - Draw.tw(right.get(i)), y + 4 + i * 11, 0xFF000000 | acc);
@@ -169,42 +188,48 @@ public class Hud {
         panel(g, ENV, "Окружение", l, r, edit);
     }
 
-    // ---------------------------------------------------------------- target hud
     private static void targetHud(DrawContext g, MinecraftClient mc) {
         LivingEntity t = TargetInfo.target;
         if (t == null) return;
         if (t != lastT) { shownHp = t.getHealth(); lastT = t; }
         float maxHp = Math.max(1f, t.getMaxHealth());
         float hp = t.getHealth() + t.getAbsorptionAmount();
-        shownHp += (hp - shownHp) * 0.15f;
+        shownHp += (hp - shownHp) * 0.16f;
         float ratio = MathHelper.clamp(shownHp / maxHp, 0, 1);
         int acc = RenderUtil.THEMES[RenderUtil.theme][0];
+        int acc2 = RenderUtil.THEMES[RenderUtil.theme][1];
 
         int x = TARGET.x, y = TARGET.y, w = TARGET.w, h = TARGET.h;
         TARGET.on = true;
-        Draw.rr(g, x - 1, y - 1, w + 2, h + 2, 12, 0x33000000);
-        Draw.rr(g, x, y, w, h, 11, 0xE6141420);
+        Draw.rr(g, x - 1, y - 1, w + 2, h + 2, 13, 0x33000000);
+        Draw.rr(g, x, y, w, h, 12, glassBg());
+
         if (t instanceof AbstractClientPlayerEntity pl) {
             PlayerSkinDrawer.draw(g, pl.getSkinTextures(), x + 6, y + 6, 24);
         } else {
-            Draw.rr(g, x + 6, y + 6, 24, 24, 12, 0xFF1E1E2A);
+            Draw.rr(g, x + 6, y + 6, 24, 24, 12, 0x881E1E2A);
             Draw.text(g, t.getName().getString().substring(0, 1), x + 16, y + 14, 0xFFFFFFFF);
         }
-        Draw.text(g, t.getName().getString(), x + 36, y + 8, 0xFFFFFFFF);
-        Draw.text(g, Math.round(mc.player.distanceTo(t)) + "m  A" + t.getArmor(), x + 36, y + 20, 0xFF7A7A92);
 
-        int cx = x + w - 20, cy = y + h / 2;
+        Draw.text(g, t.getName().getString(), x + 36, y + 7, 0xFFFFFFFF);
+        Draw.text(g, String.format("%.1f HP  %dm", hp, Math.round(mc.player.distanceTo(t))), x + 36, y + 18, 0xFFA4A4BE);
+
+        // Полоска здоровья + кольцевой индикатор
+        int barX = x + 36, barY = y + 30, barW = w - 68;
+        Draw.rr(g, barX, barY, barW, 4, 2, 0x662A2A3C);
+        Draw.rr(g, barX, barY, Math.max(4, (int) (barW * ratio)), 4, 2, 0xFF000000 | RenderUtil.mix(acc, acc2, ratio));
+
+        int cx = x + w - 18, cy = y + h / 2;
         for (int d = 0; d < 360; d += 5) {
             double a = Math.toRadians(d);
             int px = cx + (int) Math.round(Math.sin(a) * 11), py = cy - (int) Math.round(Math.cos(a) * 11);
-            g.fill(px, py, px + 2, py + 2, d / 360f <= ratio ? (0xFF000000 | acc) : 0xFF2A2A38);
+            g.fill(px, py, px + 2, py + 2, d / 360f <= ratio ? (0xFF000000 | acc) : 0x552A2A38);
         }
         String num = String.valueOf(Math.round(hp));
         Draw.text(g, num, cx + 1 - Draw.tw(num) / 2, cy - 3, 0xFFFFFFFF);
-        g.fill(x + 8, y + h - 1, x + w - 8, y + h, 0xCC000000 | (acc & 0xFFFFFF));
+        g.fill(x + 10, y + h - 1, x + w - 10, y + h, 0xAA000000 | (acc & 0xFFFFFF));
     }
 
-    // ---------------------------------------------------------------- items / armor / keys
     private static void items(DrawContext g, MinecraftClient mc) {
         int acc = RenderUtil.THEMES[RenderUtil.theme][0];
         var inv = mc.player.getInventory();
@@ -214,16 +239,16 @@ public class Hud {
             for (int i = 0; i < inv.size(); i++) { ItemStack s = inv.getStack(i); if (s.isOf(it)) n += s.getCount(); }
             String t = n > 0 ? String.valueOf(n) : "N/A";
             int w = 30 + Draw.tw(t);
-            Draw.rr(g, x - 1, ITEMS.y - 1, w + 2, 18, 9, 0x33000000);
-            Draw.rr(g, x, ITEMS.y, w, 16, 8, 0xE6141420);
+            Draw.rr(g, x - 1, ITEMS.y - 1, w + 2, 18, 9, 0x26000000);
+            Draw.rr(g, x, ITEMS.y, w, 16, 8, glassBg());
             g.getMatrices().push();
             g.getMatrices().translate(x + 3f, ITEMS.y + 2f, 0f);
             g.getMatrices().scale(0.75f, 0.75f, 1f);
             g.drawItem(new ItemStack(it), 0, 0);
             g.getMatrices().pop();
-            g.fill(x + 17, ITEMS.y + 3, x + 18, ITEMS.y + 13, 0xFF30303C);
+            g.fill(x + 17, ITEMS.y + 3, x + 18, ITEMS.y + 13, 0x55484860);
             Draw.text(g, t, x + 22, ITEMS.y + 4, n > 0 ? 0xFFFFFFFF : 0xFF7A7A92);
-            g.fill(x + 6, ITEMS.y + 15, x + w - 6, ITEMS.y + 16, 0xCC000000 | (acc & 0xFFFFFF));
+            g.fill(x + 6, ITEMS.y + 15, x + w - 6, ITEMS.y + 16, 0xAA000000 | (acc & 0xFFFFFF));
             x += w + 4;
         }
         ITEMS.w = x - ITEMS.x - 4; ITEMS.h = 16; ITEMS.on = true;
@@ -231,16 +256,16 @@ public class Hud {
 
     private static void armor(DrawContext g, MinecraftClient mc) {
         EquipmentSlot[] slots = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
-        Draw.rr(g, ARMOR.x - 1, ARMOR.y - 1, ARMOR.w + 2, ARMOR.h + 2, 11, 0x33000000);
-        Draw.rr(g, ARMOR.x, ARMOR.y, ARMOR.w, ARMOR.h, 10, 0xE6141420);
+        Draw.rr(g, ARMOR.x - 1, ARMOR.y - 1, ARMOR.w + 2, ARMOR.h + 2, 11, 0x26000000);
+        Draw.rr(g, ARMOR.x, ARMOR.y, ARMOR.w, ARMOR.h, 10, glassBg());
         for (int i = 0; i < 4; i++) {
             ItemStack s = mc.player.getEquippedStack(slots[i]);
             int ix = ARMOR.x + 4 + i * 20, iy = ARMOR.y + 3;
-            if (s.isEmpty()) { Draw.rr(g, ix + 2, iy + 2, 12, 12, 6, 0xFF22222E); continue; }
+            if (s.isEmpty()) { Draw.rr(g, ix + 2, iy + 2, 12, 12, 6, 0x5522222E); continue; }
             g.drawItem(s, ix, iy);
             if (s.getMaxDamage() > 0) {
                 float f = 1f - s.getDamage() / (float) s.getMaxDamage();
-                g.fill(ix, iy + 17, ix + 16, iy + 19, 0xFF22222E);
+                g.fill(ix, iy + 17, ix + 16, iy + 19, 0x6622222E);
                 g.fill(ix, iy + 17, ix + (int) (16 * f), iy + 19, RenderUtil.mix(0xFF4444, 0x44FF66, f));
             }
         }
@@ -261,11 +286,10 @@ public class Hud {
     }
     private static void key(DrawContext g, int x, int y, int s, String t, boolean on, int acc) { keyW(g, x, y, s, t, on, acc); }
     private static void keyW(DrawContext g, int x, int y, int w, String t, boolean on, int acc) {
-        Draw.rr(g, x, y, w, 16, 8, on ? (0xCC000000 | (acc & 0xFFFFFF)) : 0xC8141420);
-        Draw.text(g, t, x + (w - Draw.tw(t)) / 2, y + 4, on ? 0xFF000000 : 0xFFB0B0C4);
+        Draw.rr(g, x, y, w, 16, 8, on ? (0xCC000000 | (acc & 0xFFFFFF)) : glassBg());
+        Draw.text(g, t, x + (w - Draw.tw(t)) / 2, y + 4, on ? 0xFF000000 : 0xFFC0C0D6);
     }
 
-    // ---------------------------------------------------------------- editor (чат открыт)
     public static void editor(DrawContext g, int mx, int my) {
         var mc = MinecraftClient.getInstance();
         boolean down = GLFW.glfwGetMouseButton(mc.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
