@@ -12,7 +12,7 @@ public class TargetInfo {
     public static void update(MinecraftClient mc) {
         LivingEntity c = null;
         if (mc.targetedEntity instanceof LivingEntity le && le != mc.player && !(le instanceof ArmorStandEntity)) c = le;
-        if (c == null) c = TriggerBot.target != null ? TriggerBot.target : AimAssist.target;
+        if (c == null) c = KillAura.target != null ? KillAura.target : (TriggerBot.target != null ? TriggerBot.target : AimAssist.target);
         if (c != null) { target = c; lastSeen = System.currentTimeMillis(); }
         if (target != null && (target.isRemoved() || !target.isAlive() || mc.player.distanceTo(target) > 80)) target = null;
     }

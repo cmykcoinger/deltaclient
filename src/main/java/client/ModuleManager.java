@@ -8,9 +8,9 @@ public class ModuleManager {
     public static final List<Module> modules = new ArrayList<>();
 
     public static void init() {
+        modules.add(new KillAura());
         modules.add(new AimAssist());
         modules.add(new TriggerBot());
-        modules.add(new AutoSwap());
         modules.add(new AutoTotem());
         modules.add(new ClickPearl());
 
@@ -23,11 +23,6 @@ public class ModuleManager {
         modules.add(new Arrows());
         modules.add(new Cosmetics());
         modules.add(new Fullbright());
-        modules.add(new Interface());
-        modules.add(new Removals());
-        modules.add(new SeeInvisibles());
-
-        modules.add(new FastEXP());
 
         modules.add(new ItemUse("Дезориентация", "дезориентация", GLFW.GLFW_KEY_Z));
         modules.add(new ItemUse("Трапка", "трап", GLFW.GLFW_KEY_X));
