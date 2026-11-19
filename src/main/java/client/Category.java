@@ -1,3 +1,3 @@
 package client;
 
-public enum Category { COMBAT, MOVEMENT, VISUALS, SERVER, MISC }
+public enum Category { COMBAT, MOVEMENT, VISUALS, PLAYER, SERVER, MISC }

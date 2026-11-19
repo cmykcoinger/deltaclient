@@ -1,0 +1,12 @@
+{
+  "required": false,
+  "package": "client.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "injectors": { "defaultRequire": 0 },
+  "client": [
+    "FireOverlayMixin",
+    "WaterOverlayMixin",
+    "WallOverlayMixin",
+    "GlowMixin"
+  ]
+}

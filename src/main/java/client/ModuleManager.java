@@ -22,6 +22,11 @@ public class ModuleManager {
         modules.add(new Arrows());
         modules.add(new Cosmetics());
         modules.add(new Fullbright());
+        modules.add(new Interface());
+        modules.add(new Removals());
+        modules.add(new SeeInvisibles());
+
+        modules.add(new FastEXP());
 
         modules.add(new ItemUse("Дезориентация", "дезориентация", GLFW.GLFW_KEY_Z));
         modules.add(new ItemUse("Трапка", "трап", GLFW.GLFW_KEY_X));

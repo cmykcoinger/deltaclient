@@ -5,6 +5,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
+import org.lwjgl.glfw.GLFW;
 
 public class Draw {
     public static Matrix4f proj, view;
@@ -53,5 +54,30 @@ public class Draw {
             g.fill(x + inset, y + h - i - 1, x + w - inset, y + h - i, c);
         }
         g.fill(x, y + r, x + w, y + h - r, c);
+    }
+
+    public static String keyName(int key) {
+        String n = GLFW.glfwGetKeyName(key, 0);
+        if (n != null) return n.toUpperCase();
+        return switch (key) {
+            case GLFW.GLFW_KEY_RIGHT_SHIFT -> "RSHIFT";
+            case GLFW.GLFW_KEY_LEFT_SHIFT -> "LSHIFT";
+            case GLFW.GLFW_KEY_SPACE -> "SPACE";
+            default -> "K" + key;
+        };
+    }
+
+    public static int chipW(String t) { return tw(t) + 24; }
+
+    /** Плашка: цветная точка | текст, снизу линия цвета темы. Возвращает ширину. */
+    public static int chip(DrawContext g, int x, int y, String t, int accRgb, int textArgb) {
+        int w = chipW(t);
+        rr(g, x - 1, y - 1, w + 2, 16, 5, 0x44000000);
+        rr(g, x, y, w, 14, 5, 0xE0141420);
+        rr(g, x + 5, y + 4, 6, 6, 3, 0xFF000000 | (accRgb & 0xFFFFFF));
+        g.fill(x + 14, y + 3, x + 15, y + 11, 0xFF30303C);
+        text(g, t, x + 19, y + 3, textArgb);
+        g.fill(x + 6, y + 13, x + w - 6, y + 14, 0xCC000000 | (accRgb & 0xFFFFFF));
+        return w;
     }
 }
