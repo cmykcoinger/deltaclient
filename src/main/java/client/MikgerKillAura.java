@@ -5,6 +5,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -21,14 +22,14 @@ public class MikgerKillAura extends Module {
     private final Setting fov = add(Setting.num("FOV", 360, 30, 360));
     private final Setting speed = add(Setting.num("Aim speed", 16.0, 3.0, 35.0));
     private final Setting jitter = add(Setting.num("Micro jitter", 0.55, 0.0, 3.0));
-    private final Setting sprintReset = add(Setting.bool("Sprint reset", true));
     private final Setting playersOnly = add(Setting.bool("Players only", true));
-    private final Setting priority = add(Setting.mode("Priority", 0, "Distance", "Health", "FOV"));
+    private final Setting silentAim = add(Setting.bool("Silent Aim (F5)", true)); 
 
     private float rotYaw, rotPitch;
     private boolean rotActive;
     private float noiseYaw, noisePitch;
     private long nextNoiseTime, nextAttackTime;
+    private int jumpCooldown = 0;
 
     public MikgerKillAura() {
         super("MikgerKillAura", Category.COMBAT);
@@ -36,13 +37,7 @@ public class MikgerKillAura extends Module {
     }
 
     @Override
-    public void onEnable() {
-        target = null;
-        rotActive = false;
-        var p = MinecraftClient.getInstance().player;
-        if (p != null) { rotYaw = p.getYaw(); rotPitch = p.getPitch(); }
-    }
-
+    public void onEnable() { target = null; rotActive = false; }
     @Override
     public void onDisable() { target = null; rotActive = false; }
 
@@ -51,40 +46,6 @@ public class MikgerKillAura extends Module {
         float yaw = (float) (Math.toDegrees(Math.atan2(d.z, d.x)) - 90f);
         float pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.hypot(d.x, d.z)));
         return new float[]{yaw, pitch};
-    }
-
-    private void updateRotation(MinecraftClient mc, net.minecraft.client.network.ClientPlayerEntity p, LivingEntity t, float dt) {
-        int rotType = (int) Math.round(mode.value);
-        long now = System.currentTimeMillis();
-
-        if (now >= nextNoiseTime) {
-            double j = jitter.value * (rotType == 1 ? 1.15 : (rotType == 0 ? 0.85 : 0.45));
-            noiseYaw = (float) ThreadLocalRandom.current().nextDouble(-j, j);
-            noisePitch = (float) ThreadLocalRandom.current().nextDouble(-j * 0.65, j * 0.65);
-            nextNoiseTime = now + ThreadLocalRandom.current().nextLong(45, 115);
-        }
-
-        if (!rotActive) { rotYaw = p.getYaw(); rotPitch = p.getPitch(); rotActive = true; }
-
-        Vec3d eye = p.getCameraPosVec(1.0f);
-        float[] want = anglesTo(eye, t.getBoundingBox().getCenter());
-        float desiredYaw = want[0] + noiseYaw;
-        float desiredPitch = MathHelper.clamp(want[1] + noisePitch, -89.5f, 89.5f);
-
-        float dy = MathHelper.wrapDegrees(desiredYaw - rotYaw);
-        float dp = desiredPitch - rotPitch;
-
-        double spd = speed.value * (rotType == 2 ? 1.65 : (rotType == 1 ? 1.35 : 1.15));
-        float factor = 1f - (float) Math.exp(-spd * Math.max(dt, 0.004f));
-        float maxDeg = (float) (spd * 42.0 * Math.max(dt, 0.004f));
-
-        float stepY = MathHelper.clamp(dy * factor, -maxDeg, maxDeg);
-        float stepP = MathHelper.clamp(dp * factor, -maxDeg, maxDeg);
-
-        rotYaw += stepY;
-        rotPitch = MathHelper.clamp(rotPitch + stepP, -89.5f, 89.5f);
-        p.setYaw(rotYaw);
-        p.setPitch(rotPitch);
     }
 
     private boolean canCritNow(net.minecraft.client.network.ClientPlayerEntity p) {
@@ -102,6 +63,15 @@ public class MikgerKillAura extends Module {
         if (p == null || mc.world == null || mc.interactionManager == null) return;
         if (mc.currentScreen != null || p.isUsingItem()) { target = null; rotActive = false; return; }
 
+        if (jumpCooldown > 0) jumpCooldown--;
+        if (critMode.value == 1 || critMode.value == 0) { 
+            if (p.isOnGround() && target != null && p.distanceTo(target) <= range.value && jumpCooldown == 0) {
+                p.jump(); 
+                jumpCooldown = 10;
+                return; 
+            }
+        }
+
         LivingEntity best = null;
         double bestScore = Double.MAX_VALUE;
         Vec3d eye = p.getEyePos();
@@ -116,12 +86,7 @@ public class MikgerKillAura extends Module {
             float[] ang = anglesTo(eye, le.getBoundingBox().getCenter());
             double fovDiff = Math.hypot(MathHelper.wrapDegrees(ang[0] - p.getYaw()), ang[1] - p.getPitch());
             if (fovDiff > fov.value / 2.0) continue;
-            int prio = (int) Math.round(priority.value);
-            double score = switch (prio) {
-                case 1 -> le.getHealth() + le.getAbsorptionAmount();
-                case 2 -> fovDiff;
-                default -> dist;
-            };
+            double score = dist; 
             if (score < bestScore) { bestScore = score; best = le; }
         }
 
@@ -135,11 +100,20 @@ public class MikgerKillAura extends Module {
         int cMode = (int) Math.round(critMode.value);
         if (cMode == 1 && !canCritNow(p)) return;
 
-        float savedYaw = p.getYaw(), savedPitch = p.getPitch();
-        p.setYaw(rotYaw); p.setPitch(rotPitch);
-        mc.interactionManager.attackEntity(p, target);
-        p.swingHand(Hand.MAIN_HAND);
-        p.setYaw(savedYaw); p.setPitch(savedPitch);
+        float[] want = anglesTo(eye, target.getBoundingBox().getCenter());
+        
+        if (silentAim.on()) {
+            mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(want[0], want[1], p.isOnGround()));
+            mc.interactionManager.attackEntity(p, target);
+            p.swingHand(Hand.MAIN_HAND);
+            mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(p.getYaw(), p.getPitch(), p.isOnGround()));
+        } else {
+            float savedYaw = p.getYaw(), savedPitch = p.getPitch();
+            p.setYaw(want[0]); p.setPitch(want[1]);
+            mc.interactionManager.attackEntity(p, target);
+            p.swingHand(Hand.MAIN_HAND);
+            p.setYaw(savedYaw); p.setPitch(savedPitch);
+        }
 
         int rotType = (int) Math.round(mode.value);
         long minMs = rotType == 1 ? 18 : (rotType == 0 ? 22 : 12);
@@ -148,10 +122,5 @@ public class MikgerKillAura extends Module {
     }
 
     @Override
-    public void onFrame(float dt) {
-        MinecraftClient mc = MinecraftClient.getInstance();
-        var p = mc.player;
-        if (target == null || !target.isAlive() || p == null || mc.currentScreen != null) { rotActive = false; return; }
-        updateRotation(mc, p, target, dt);
-    }
+    public void onFrame(float dt) { }
 }

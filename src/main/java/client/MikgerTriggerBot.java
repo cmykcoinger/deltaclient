@@ -7,6 +7,7 @@ import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -21,6 +22,7 @@ public class MikgerTriggerBot extends Module {
 
     private long nextAttackTime, aimStartTime;
     private LivingEntity lastTarget;
+    private int jumpCooldown = 0;
 
     public MikgerTriggerBot() {
         super("MikgerTriggerBot", Category.COMBAT);
@@ -42,34 +44,45 @@ public class MikgerTriggerBot extends Module {
         if (p == null || mc.world == null || mc.interactionManager == null) return;
         if (mc.currentScreen != null || p.isUsingItem()) return;
 
+        if (jumpCooldown > 0) jumpCooldown--;
+
         LivingEntity target = null;
         double bestDist = Double.MAX_VALUE;
+        Vec3d eye = p.getEyePos();
+
         for (var e : mc.world.getEntities()) {
             if (!(e instanceof LivingEntity le) || le == p || !le.isAlive() || le.isRemoved() || le instanceof ArmorStandEntity) continue;
             if (playersOnly.on() && !(le instanceof PlayerEntity)) continue;
             if (le instanceof PlayerEntity pe && pe.isCreative()) continue;
             if (p.distanceTo(le) > range.value) continue;
             if (!p.canSee(le)) continue;
-            if (le.getBoundingBox().raycast(p.getCameraPosVec(1.0f), le.getBoundingBox().getCenter()).isEmpty()) continue;
-            double d = p.distanceTo(le);
-            if (d < bestDist) { bestDist = d; target = le; }
+            
+            Vec3d look = eye.add(p.getRotationVec(1.0f).multiply(p.distanceTo(le)));
+            if (le.getBoundingBox().expand(0.2).contains(look)) {
+                double d = p.distanceTo(le);
+                if (d < bestDist) { bestDist = d; target = le; }
+            }
         }
 
         if (target != lastTarget) { lastTarget = target; aimStartTime = System.currentTimeMillis(); }
         if (target == null) return;
 
+        if (crits.on()) {
+            if (p.isOnGround() && jumpCooldown == 0) {
+                p.jump();
+                jumpCooldown = 12;
+                return; 
+            }
+            if (!canCritNow(p)) return;
+        }
+
         long now = System.currentTimeMillis();
         if (now - aimStartTime < reaction.value) return;
-        if (crits.on() && !canCritNow(p)) return;
         if (p.getAttackCooldownProgress(0.5f) < 0.90f) return;
         if (now < nextAttackTime) return;
 
-        float savedYaw = p.getYaw(), savedPitch = p.getPitch();
-        p.setYaw(MathHelper.wrapDegrees((float) Math.toDegrees(Math.atan2(target.getZ() - p.getZ(), target.getX() - p.getX())) - 90f));
-        p.setPitch((float) -Math.toDegrees(Math.atan2(target.getEyeY() - p.getEyeY(), Math.hypot(target.getX() - p.getX(), target.getZ() - p.getZ()))));
         mc.interactionManager.attackEntity(p, target);
         p.swingHand(Hand.MAIN_HAND);
-        p.setYaw(savedYaw); p.setPitch(savedPitch);
 
         int lo = (int) Math.round(cpsMin.value), hi = (int) Math.round(cpsMax.value);
         int cps = ThreadLocalRandom.current().nextInt(lo, hi + 1);
