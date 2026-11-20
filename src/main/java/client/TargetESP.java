@@ -2,11 +2,7 @@ package client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.BufferRenderer;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.render.*;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -27,7 +23,6 @@ public class TargetESP extends Module {
         MinecraftClient mc = MinecraftClient.getInstance();
         Vec3d camPos = mc.gameRenderer.getCamera().getPos();
         
-        // Строим билборд (плоскость, которая смотрит на камеру)
         Vec3d dir = camPos.subtract(pos).normalize();
         Vec3d up = new Vec3d(0, 1, 0);
         Vec3d right = dir.crossProduct(up).normalize();
@@ -39,26 +34,24 @@ public class TargetESP extends Module {
         Vec3d p3 = pos.subtract(right.multiply(size)).subtract(up.multiply(size));
         Vec3d p4 = pos.subtract(right.multiply(size)).add(up.multiply(size));
 
-        // Внутренний яркий шар
-        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+        // Используем RenderLayer для 1.21.4
+        VertexConsumer buffer = mc.getBufferBuilders().getEntityVertexConsumers().getBuffer(RenderLayer.getDebugQuads());
+        
         buffer.vertex(matrix, (float)p1.x, (float)p1.y, (float)p1.z).color(innerColor);
         buffer.vertex(matrix, (float)p2.x, (float)p2.y, (float)p2.z).color(innerColor);
         buffer.vertex(matrix, (float)p3.x, (float)p3.y, (float)p3.z).color(innerColor);
         buffer.vertex(matrix, (float)p4.x, (float)p4.y, (float)p4.z).color(innerColor);
-        BufferRenderer.drawWithGlobalProgram(buffer.end());
         
-        // Внешний тусклый ореол (свечение)
+        // Внешний ореол
         Vec3d o1 = pos.add(right.multiply(size * 1.8)).add(up.multiply(size * 1.8));
         Vec3d o2 = pos.add(right.multiply(size * 1.8)).subtract(up.multiply(size * 1.8));
         Vec3d o3 = pos.subtract(right.multiply(size * 1.8)).subtract(up.multiply(size * 1.8));
         Vec3d o4 = pos.subtract(right.multiply(size * 1.8)).add(up.multiply(size * 1.8));
 
-        buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
         buffer.vertex(matrix, (float)o1.x, (float)o1.y, (float)o1.z).color(outerColor);
         buffer.vertex(matrix, (float)o2.x, (float)o2.y, (float)o2.z).color(outerColor);
         buffer.vertex(matrix, (float)o3.x, (float)o3.y, (float)o3.z).color(outerColor);
         buffer.vertex(matrix, (float)o4.x, (float)o4.y, (float)o4.z).color(outerColor);
-        BufferRenderer.drawWithGlobalProgram(buffer.end());
     }
 
     @Override
@@ -74,7 +67,7 @@ public class TargetESP extends Module {
         int count = Math.max(1, (int) Math.round(orbCount.value));
 
         RenderSystem.enableBlend();
-        RenderSystem.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE); // Аддитивное свечение
+        RenderSystem.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE); 
         RenderSystem.disableCull();
         RenderSystem.depthMask(false);
         RenderSystem.disableDepthTest();
@@ -90,18 +83,16 @@ public class TargetESP extends Module {
             
             drawOrb(m, pos, size.value.floatValue(), inner, outer);
             
-            // Шлейф (5 затухающих копий)
             for (int k = 1; k <= 5; k++) {
                 double tp = phase - k * 0.1;
                 double tr = t.getWidth() * radius.value;
                 double ty = y + h * 0.5 + Math.sin(tp * 1.5) * (h * 0.4);
                 Vec3d tPos = new Vec3d(x + Math.cos(tp) * tr, ty, z + Math.sin(tp) * tr);
-                
-                int trailCol = 0x22FF3300;
-                drawOrb(m, tPos, size.value.floatValue() * 0.8f, trailCol, 0x00FF3300);
+                drawOrb(m, tPos, size.value.floatValue() * 0.8f, 0x22FF3300, 0x00FF3300);
             }
         }
 
+        mc.getBufferBuilders().getEntityVertexConsumers().draw();
         RenderSystem.enableDepthTest();
         RenderSystem.depthMask(true);
         RenderSystem.enableCull();
