@@ -32,7 +32,11 @@ public class ModuleManager {
         modules.add(new ItemUse("Снежок заморозка", "заморозка", GLFW.GLFW_KEY_N));
 
         modules.add(new Optimize());
-    }
+
+modules.add(new MikgerKillAura());
+modules.add(new MikgerTriggerBot());
+modules.add(new MikgerFTItems()); 
+   }
 
     public static List<Module> byCategory(Category c) {
         List<Module> out = new ArrayList<>();
