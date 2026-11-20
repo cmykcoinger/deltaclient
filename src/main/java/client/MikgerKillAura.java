@@ -103,10 +103,10 @@ public class MikgerKillAura extends Module {
         float[] want = anglesTo(eye, target.getBoundingBox().getCenter());
         
         if (silentAim.on()) {
-            mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(want[0], want[1], p.isOnGround()));
+            mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(want[0], want[1], p.isOnGround(), false));
             mc.interactionManager.attackEntity(p, target);
             p.swingHand(Hand.MAIN_HAND);
-            mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(p.getYaw(), p.getPitch(), p.isOnGround()));
+            mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(p.getYaw(), p.getPitch(), p.isOnGround(), false));
         } else {
             float savedYaw = p.getYaw(), savedPitch = p.getPitch();
             p.setYaw(want[0]); p.setPitch(want[1]);
