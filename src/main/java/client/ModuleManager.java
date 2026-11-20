@@ -17,7 +17,6 @@ public class ModuleManager {
         modules.add(new Sprint());
         modules.add(new InvMove());
 
-        modules.add(new TargetESP());
         modules.add(new Trajectories());
         modules.add(new NameTags());
         modules.add(new Arrows());
@@ -33,6 +32,7 @@ public class ModuleManager {
 
         modules.add(new MikgerKillAura()); 
         modules.add(new MikgerTriggerBot());
+        modules.add(new TargetESP());
         modules.add(new Optimize());
 
    }

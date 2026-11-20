@@ -40,7 +40,7 @@ public class ClickGui extends Screen {
     @Override
     public void render(DrawContext g, int mx, int my, float delta) {
         // Фон (затемнение)
-        g.fill(0, 0, width, height, 0x99000000);
+        g.fill(0, 0, width, height, 0x00000000);
 
         // Отрисовка панелей (колонок)
         for (Panel p : panels) {
@@ -163,7 +163,7 @@ public class ClickGui extends Screen {
             int yOff = p.y + 22;
             for (Module m : mods) {
                 if (mx >= p.x && mx <= p.x + 125 && my >= yOff && my <= yOff + 16) {
-                    if (btn == 1) { // ПКМ - настройки
+                    if (btn >= 0) { // Любая кнопка мыши
                         selectedModule = m;
                     } else {
                         m.trigger(); // ЛКМ - вкл/выкл
